@@ -37,6 +37,7 @@ def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 3):
     e1 = Conv3D(filter=64,padding='valid', kernel_size=3)(e0_D)
     e1 = Activ(e1)
     e1_C = Conv3D(filter=128, padding='valid', kernel_size=3, strides = 2)(e1)
+    e1_C = Bat(e1_C)
     e1_C = Activ(e1_C)
     #e1_D = AveragePooling3D()(e1_C)
     '''
