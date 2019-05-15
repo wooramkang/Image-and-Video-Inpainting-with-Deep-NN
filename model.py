@@ -16,7 +16,7 @@ import utils
 from keras.layers.core import Lambda, Flatten, Dense
 import math
 
-def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 4):
+def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 3):
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)
     #Activ = LeakyReLU(alpha=0.2)
@@ -75,74 +75,89 @@ def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 4):
 
     d2_CC = Conv3D(filter=3, padding='valid', kernel_size=3)(d1_CC)
     d2_CC = Bat(d2_CC)
-    d2_CC = Activ(d2_CC)
+    d2_CC = Activation('tanh')(d2_CC)
     
     video_3DCN = Model (input_video, d2_CC)
 
     return video_3DCN
 
 
-def CombCN(video_size, depth, sampling_frame,  frame_net_mid_depth, frame_3DCN):
+def CombCN(video_size, depth, sampling_frame,  frame_3DCN, frame_net_mid_depth = 4):
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
+    Bat = lambda x: BatchNormalization()(x)
     W = video_size[0]
     H = video_size[1]
     input_image = Input(np.array((,W, H, 3))
 
-    e0 = Conv2D(filter=(),padding='valid', kernel_size=32)(input_image)
+    e0 = Conv3D(filter=16,padding='valid', kernel_size=5)(input_image)
+    e0 = Bat(e0)
     e0 = Activ(e0)
-    e0_C = Conv2D(filter=(), padding='valid', kernel_size=32)(e0)
+    
+    e0_C = Conv3D(filter=32, padding='valid', kernel_size=3, strides =2)(e0)
+    e0_C = Bat(e0_C)
     e0_C = Activ(e0_C)
-    e0_D = AveragePooling2D()(e0_C)
+    e0_C = Concatenate()([frame_3DCN, e0_C])
 
-    e1 = Concatenate()([frame_3DCN, e0_D])
-    e1 = Conv2D(filter=(),padding='valid', kernel_size=128)(e0_D)
+    e1 = Conv3D(filter=64,padding='valid', kernel_size=3)(e0_D)
+    e1 = Bat(e1)
     e1 = Activ(e1)
-    e1_C = Conv2D(filter=(), padding='valid', kernel_size=128)(e1)
+
+    e1_C = Conv3D(filter=128, padding='valid', kernel_size=3, strides = 2)(e1)
+    e1_C = Bat(e1_C)
     e1_C = Activ(e1_C)
-    e1_D = AveragePooling2D()(e1_C)
 
-    e2 = Conv2D(filter=(),padding='valid', kernel_size=512)(input_video)
+    e2 = Conv3D(filter=256, padding='valid', kernel_size=3)(e1_c)
+    e2 = Bat(e2)
     e2 = Activ(e2)
-    e2_C = Conv2D(filter=(), padding='valid', kernel_size=512)(input_videod)
+    
+    # on original paper, this part is strides=1, channels=256
+    e2_C = Conv3D(filter=512, padding='valid', kernel_size=3, strides = 2)(e2)
+    e2_C = Bat(e2_C)
     e2_C = Activ(e2_C)
-    e2_D = e1_D = AveragePooling2D()(e2_C)
 
-    fc_mid = e2_D
+    fc_mid = e2_C
+    p_num = 2
+
+    # on original paper, this part is strides=1, channels=256,  dilation 2**n
     for i in range(vid_net_mid_depth):
-        fc_mid = Conv2D(strides=1 , filters= (), dilation_rate=(2,2,1), kernel_size = 512)(fc_mid)
+        fc_mid = Conv3D(filters= 512, dilation_rate=(p_num, p_num, 1), kernel_size = 3)(fc_mid)
+        fc_mid = Bat(fc_mid)
         fc_mid = Activ(fc_mid)
-    fc_mid = Concatenate()([fc_mid, e2_D])
-    fc_mid = Conv2D(strides=1 , filters= (), dilation_rate=(2,2,1), kernel_size = 2048)(fc_mid)
+        p_num = p_num * 2
+
+    fc_mid = Concatenate()([fc_mid, e2_C])
+
+    fc_mid = Deconvolution3D(strides=2, filter=256, kernel_size= 4, padding='valid')(fc_mid)
+    fc_mid = Bat(fc_mid)
     fc_mid = Activ(fc_mid)
+    fc_mid = Concatenate()([fc_mid, e2])
 
-    d0_U = Upsampling2D()(fc_mid)
-    d0_U = Concatenate()([d0_U, e2_C])
-    d0_C = Conv2D(filter=(),padding='valid', kernel_size=512)(d0_U)
-    d0_C = Activ(d0_C)
-    d0_CC = Conv2D(filter=(),padding='valid', kernel_size=512)(d0_C)
-    d0_CC = Activ(d0_CC)
+    fc_mid = Conv3D(strides=1, filter=128, kernel_size= 3, padding='valid')(fc_mid)
+    fc_mid = Bat(fc_mid)
+    fc_mid = Activ(fc_mid)
+    fc_mid = Concatenate()([fc_mid, e1_C])
 
-    d1_U = Upsampling2D()(d0_CC)
-    d1_U = Concatenate()([d1_U, e1_C])
-    d1_C = Conv2D(filter=(),padding='valid', kernel_size=128)(d1_U)
+    fc_mid = Deconvolution3D(strides=2, filter=128, kernel_size= 4, padding='valid')(fc_mid)
+    fc_mid = Bat(fc_mid)
+    fc_mid = Activ(fc_mid)
+    fc_mid = Concatenate()([fc_mid, e1])    
+
+    d1_C = Conv3D(filter= 64,padding='valid', kernel_size=3)(fc_mid)
+    d1_C = Bat(d1_C)
     d1_C = Activ(d1_C)
     d1_C = Concatenate()([d1_C, frame_3DCN])
-    d1_CC = Conv2D(filter=(),padding='valid', kernel_size=128)(d1_C)
+
+    d1_CC = Deconvolution3D(strides=2, filter=32, kernel_size= 4, padding='valid')(d1_C)
+    d1_CC = Bat(d1_CC)
     d1_CC = Activ(d1_CC)
 
-    d2_U = Upsampling2D()(d1_CC)
-    d2_U = Concatenate()([d2_U, e0_C])
-    d2_C = Conv2D(filter=(),padding='valid', kernel_size=32)(d2_U)
-    d2_C = Activ(d2_C)
-    d2_CC = Conv2D(filter=(),padding='valid', kernel_size=32)(d2_C)
-    d2_CC = Activ(d2_CC)
+    d2_CC = Conv3D(filter=3, padding='valid', kernel_size=3)(d1_CC)
+    d2_CC = Bat(d2_CC)
+    d2_CC = Activation('tanh')(d2_CC)
 
-    image_Como03DCN = Model (input_image, d2_CC)
+    image_Comb3DCN = Model (input_image, d2_CC)
     
-    full_model = Model(, )
-
-
-    return full_model
+    return image_Comb3DCN
 
 
 def network_generate(vid_size, depth, sampling_frame,  vid_net_mid_depth, frame_net_mid_depth):
