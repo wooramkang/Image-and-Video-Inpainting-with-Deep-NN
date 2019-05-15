@@ -77,12 +77,14 @@ def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 3):
     d2_CC = Bat(d2_CC)
     d2_CC = Activation('tanh')(d2_CC)
     
-    video_3DCN = Model (input_video, d2_CC)
+    video_3DCN = Model(input_video, d2_CC)
 
     return video_3DCN
 
 
-def CombCN(video_size, depth, sampling_frame,  frame_3DCN, frame_net_mid_depth = 4):
+def CombCN(video_size, sampling_frame, frame_3DCN, frame_net_mid_depth = 4):
+    #frame_3DCN => total frames or jsut frame of Vk in Vin 
+
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)
     W = video_size[0]
@@ -125,27 +127,27 @@ def CombCN(video_size, depth, sampling_frame,  frame_3DCN, frame_net_mid_depth =
         fc_mid = Activ(fc_mid)
         p_num = p_num * 2
 
-    fc_mid = Concatenate()([fc_mid, e2_C])
+    fc_mid = Concatenate()([e2_C, fc_mid])
 
     fc_mid = Deconvolution3D(strides=2, filter=256, kernel_size= 4, padding='valid')(fc_mid)
     fc_mid = Bat(fc_mid)
     fc_mid = Activ(fc_mid)
-    fc_mid = Concatenate()([fc_mid, e2])
+    fc_mid = Concatenate()([e2, fc_mid])
 
     fc_mid = Conv3D(strides=1, filter=128, kernel_size= 3, padding='valid')(fc_mid)
     fc_mid = Bat(fc_mid)
     fc_mid = Activ(fc_mid)
-    fc_mid = Concatenate()([fc_mid, e1_C])
+    fc_mid = Concatenate()([e1_C, fc_mid])
 
     fc_mid = Deconvolution3D(strides=2, filter=128, kernel_size= 4, padding='valid')(fc_mid)
     fc_mid = Bat(fc_mid)
     fc_mid = Activ(fc_mid)
-    fc_mid = Concatenate()([fc_mid, e1])    
+    fc_mid = Concatenate()([e1, fc_mid ])    
 
     d1_C = Conv3D(filter= 64,padding='valid', kernel_size=3)(fc_mid)
     d1_C = Bat(d1_C)
     d1_C = Activ(d1_C)
-    d1_C = Concatenate()([d1_C, frame_3DCN])
+    d1_C = Concatenate()([frame_3DCN, d1_C])
 
     d1_CC = Deconvolution3D(strides=2, filter=32, kernel_size= 4, padding='valid')(d1_C)
     d1_CC = Bat(d1_CC)
@@ -155,14 +157,21 @@ def CombCN(video_size, depth, sampling_frame,  frame_3DCN, frame_net_mid_depth =
     d2_CC = Bat(d2_CC)
     d2_CC = Activation('tanh')(d2_CC)
 
-    image_Comb3DCN = Model (input_image, d2_CC)
+    image_Comb3DCN = Model(input_image, d2_CC)
     
     return image_Comb3DCN
 
 
-def network_generate(vid_size, depth, sampling_frame,  vid_net_mid_depth, frame_net_mid_depth):
+def network_generate(vid_size, depth, sampling_frame,  vid_net_mid_depth=3, frame_net_mid_depth=4):
+    # loss_f = loss of 3DNN + loss of CombCN
+    # loss_CombCN = Sig( M * G(V,M,I) - V )....
+    loss = None
+    optimazer = None
 
+
+
+
+    final_model = Model( , )
+    final_model.summary()
     
-
-
     return final_model
