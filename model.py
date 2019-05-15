@@ -14,79 +14,67 @@ from keras.layers.pooling import Upsampling2D, Upsampling3D
 from keras.models import Model
 import utils
 from keras.layers.core import Lambda, Flatten, Dense
-# https://arxiv.org/pdf/1806.08482.pdf
-# Video Inpainting by Jointly Learning Temporal Structure and Spatial Details
-# INIT 2019.05.13.
+import math
 
-def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 3):
+def CN3D(video_size, ,sampling_frame= 32,  vid_net_mid_depth = 4):
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
+    Bat = lambda x: BatchNormalization()(x)
     #Activ = LeakyReLU(alpha=0.2)
+    #Bat = BatchNormalization()
     W = video_size[0]
     H = video_size[1]
     W = W/2
     H = H/2
     
     input_video = Input( np.array((,sampling_frame, W, H, 3)) )
-
+    
     e0 = Conv3D(filter=16,padding='valid', kernel_size=5)(input_video)
+    e0 = Bat(e0)
     e0 = Activ(e0)
+    #WITH NO CONCATENATE FOR ENCODING IN 3DCN BUT WITH CONCAT FOR ENCODING IN combination part
     e0_C = Conv3D(filter=32, padding='valid', kernel_size=3, strides =2)(e0)
+    e0_C = Bat(e0_C)
     e0_C = Activ(e0_C)
-    #e0_D = AveragePooling3D()(e0_C)
-    # AFTER DOWNSAMPLE
+    
     e1 = Conv3D(filter=64,padding='valid', kernel_size=3)(e0_D)
+    e1 = Bat(e1)
     e1 = Activ(e1)
+
     e1_C = Conv3D(filter=128, padding='valid', kernel_size=3, strides = 2)(e1)
     e1_C = Bat(e1_C)
     e1_C = Activ(e1_C)
-    #e1_D = AveragePooling3D()(e1_C)
-    '''
-    e2 = Conv3D(filter=128,padding='valid', kernel_size=3)(input_video)
-    e2 = Activ(e2)
-    #e2_C = Conv3D(filter=128, padding='valid', kernel_size=3, strdies=2 )(input_videod)
-    #e2_C = Activ(e2_C)
-    #e2_D = e1_D = AveragePooling3D()(e2_C)
-    #fc_mid = e2_D
-    '''
-
+    
     fc_mid = e1_C
+    p_num = 2
+
     for i in range(vid_net_mid_depth):
-        fc_mid = Conv3D(filters= 256, dilation_rate=(2,2,1), kernel_size = 3)(fc_mid)
+        fc_mid = Conv3D(filters= 256, dilation_rate=(p_num, p_num, 1), kernel_size = 3)(fc_mid)
+        fc_mid = Bat(fc_mid)
         fc_mid = Activ(fc_mid)
+        p_num = p_num * 2
+    fc_mid = Concatenate()([fc_mid, e1_C])
 
-    fc_mid = Concatenate()([fc_mid, e2_D])
-    fc_mid = Conv3D(filters= 256, dilation_rate=(2,2,1), kernel_size = 3)(fc_mid)
+    fc_mid = Conv3D(strides=1, filter=128, kernel_size= 4, padding='valid')(fc_mid)
+    fc_mid = Bat(fc_mid)
     fc_mid = Activ(fc_mid)
-    fc_mid = Deconvolution3D(strides=2, filter=256, kernel_size= 4, padding='valid')(fc_mid)
+    fc_mid = Concatenate()([fc_mid, e1])
+
+    fc_mid = Deconvolution3D(strides=2, filter=64, kernel_size= 4, padding='valid')(fc_mid)
+    fc_mid = Bat(fc_mid)
     fc_mid = Activ(fc_mid)
-    '''
-    #d0_U = Upsampling3D()(fc_mid)
-    #d0_U = Concatenate()([d0_U, e2_C])
-    d0_U = Concatenate()([fc_mid, e2_C])
-    d0_C = Conv3D(filter=128,padding='valid', kernel_size=3)(d0_U)
-    d0_C = Activ(d0_C)
-    d0_CC = Conv3D(filter=128,padding='valid', kernel_size=3)(d0_C)
-    d0_CC = Activ(d0_CC)
-    d0_CC = Deconvolution3D(strides=2, filter=128, kernel_size= 4, padding='valid')(d0_CC)
-    d0_CC = Activ(d0_CC)
-    #d1_U = Upsampling3D()(d0_CC)
-    #d1_U = Concatenate()([d1_U, e1_C])
-    #d1_U = Concatenate()([d0_CC, e1_C])
-    '''
-    d1_U =  Concatenate()([fc_mid, e1_C])
-    d1_C = Conv3D(filter=128,padding='valid', kernel_size=3)(d1_U)
+    d1_U = Concatenate()([fc_mid, e0_C])    
+
+    d1_C = Conv3D(filter=32,padding='valid', kernel_size=3)(d1_U)
+    d1_C = Bat(d1_C)
     d1_C = Activ(d1_C)
-    d1_CC = Conv3D(filter=64,padding='valid', kernel_size=3)(d1_C)
-    d1_CC = Activ(d1_CC)
-    d1_CC = Deconvolution3D(strides=2, filter=32, kernel_size= 4, padding='valid')(d1_CC)
+    d1_C = Concatenate()([d1_C, e0])
+
+    d1_CC = Deconvolution3D(strides=2, filter=16, kernel_size= 4, padding='valid')(d1_C)
+    d1_CC = Bat(d1_CC)
     d1_CC = Activ(d1_CC)
 
-    #d2_U = Upsampling3D()(d1_CC)
-    #d2_U = Concatenate()([d2_U, e0_C])
-    d2_U = Concatenate()([d1_CC, e0_C])
-    d2_C = Conv3D(filter=16,padding='valid', kernel_size=3)(d2_U)
-    d2_C = Activ(d2_C)
-    d2_CC = Conv3D(filter=3,padding='valid', kernel_size=3)(d2_C)
+    d2_CC = Conv3D(filter=3, padding='valid', kernel_size=3)(d1_CC)
+    d2_CC = Bat(d2_CC)
     d2_CC = Activ(d2_CC)
     
     video_3DCN = Model (input_video, d2_CC)
