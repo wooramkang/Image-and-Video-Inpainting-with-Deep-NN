@@ -16,42 +16,23 @@ global video_dir
 
 #2019. 05 .16 video to images & only image stream loader // wooramkang
 
+def set_video_dir(t_str):
+    global video_dir
+    video_dir= t_str
+def set_image_dir(t_str):
+    global image_dir
+    image_dir= t_str
+
 def init_dataloader():
-    
     global default_dir
     global image_dir
     global video_dir
     global shape
 
     default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
-    video_dir = default_dir
-    image_dir = default_dir
+    set_video_dir(default_dir)
+    set_image_dir(default_dir)
     shape = None
-
-def set_image_dir(t_str):
-    global image_dir
-    image_dir= t_str
-
-'''
-def set_video_dir(t_str):
-    global video_dir
-    video_dir= t_str
-
-def get_video_shape(image_data):
-    
-    global shape
-    shape =None
-
-    return shape
-
-def Video_loader(sampling_size = 30):
-    video_list = None
-    video_streams = None
-    video_shape = None
-    global video_dir
-
-    return video_list, video_streams, video_shape
-'''
 
 def Img_loader():
     ###UCF-101
@@ -173,7 +154,26 @@ def Weight_load(model, weights_path):
     model.load_weights(weights_path)
     return model
 
-#for dataloading test
+'''
+
+def get_video_shape(image_data):
+    
+    global shape
+    shape =None
+
+    return shape
+
+def Video_loader(sampling_size = 30):
+    video_list = None
+    video_streams = None
+    video_shape = None
+    global video_dir
+
+    return video_list, video_streams, video_shape
+'''
+
+
+#FOR DATALOADER TEST
 if __name__ == "__main__":
     init_dataloader()
     Img_loader()
