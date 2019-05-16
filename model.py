@@ -19,7 +19,7 @@ from keras.layers import Conv2DTranspose, Conv3DTranspose
 
 
 
-def CN3D(video_info=None ,sampling_frame= 32,  vid_net_mid_depth = 3):
+def CN3D(video_info=None ,sampling_frame= 8,  vid_net_mid_depth = 3):
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)
     #Activ = LeakyReLU(alpha=0.2)
@@ -27,8 +27,8 @@ def CN3D(video_info=None ,sampling_frame= 32,  vid_net_mid_depth = 3):
     video_size = None
 
     if not video_size:
-        W = 256
-        H = 256
+        W = 320
+        H = 240
     else:
         W = video_size[0]
         H = video_size[1]
@@ -205,7 +205,7 @@ def CombCN(video_size, sampling_frame, frame_3DCN, frame_net_mid_depth = 4):
     return image_Comb3DCN
 
 from keras.optimizers import adam
-from dataloader import *
+from DataWeight_load import *
 
 def network_generate(depth, sampling_frame, vid_shape=None, vid_net_mid_depth=3, frame_net_mid_depth=4):
     # loss_f = loss of 3DNN + loss of CombCN
