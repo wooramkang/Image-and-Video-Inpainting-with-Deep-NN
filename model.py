@@ -208,6 +208,7 @@ def CombCN(video_size, sampling_frame, frame_3DCN, frame_net_mid_depth = 4):
 def network_generate(depth, sampling_frame, vid_shape=None, vid_net_mid_depth=3, frame_net_mid_depth=4):
     # loss_f = loss of 3DNN + loss of CombCN
     # loss_CombCN = Sig( M * G(V,M,I) - V )....
+    init_dataloader()
     loss = None
     optimazer = None
     final_model =None

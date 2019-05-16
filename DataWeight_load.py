@@ -16,14 +16,17 @@ global video_dir
 
 #2019. 05 .16 video to images & only image stream loader // wooramkang
 
-def __init_dataloader__ ():
+def init_dataloader():
     
     global default_dir
     global image_dir
     global video_dir
+    global shape
+
     default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
     video_dir = default_dir
     image_dir = default_dir
+    shape = None
 
 def set_image_dir(t_str):
     global image_dir
@@ -39,55 +42,109 @@ def Video_loader(sampling_size = 30):
     video_shape = None
     global video_dir
 
-
     return video_list, video_streams, video_shape
 
 def get_video_shape():
-    video_shape =None
     global video_dir
+    global shape
+    shape =None
 
-    return video_shape
+    return shape
 
-def Img_loader(image_dir, img_szie):
+def Img_loader():
+    ###UCF-101
     x_data = []
-    y_data = []
     global image_dir
 
-    # glob.glob("images/*"):
-    folders = os.listdir(image_path)
-    for name in folders:
+    folders_root = os.listdir(image_dir)
+
+    for name in folders_root:
+        #ex) ApplyEyeMakeup
         count=0
-        #print(name)
-        for file in glob.glob(image_path+name+"/*"):
-            count= count+1
-            identity = str(file).split('.')
-            if identity[len(identity)-1] != 'jpg':
-                break
-            img_ = cv2.imread(file)
-            img_ = cv2.resize(img_, (img_szie, img_szie))
-            #print(img_.shape)
-            img_ = np.transpose(img_, (2, 0, 1))
-            x_data.append(img_)
+        folders_son = os.listdir(image_dir+name)
 
-            #y_data.append(identity)
-            y_data.append(name)
-            if count == 20:
-                break
+        images = dict()
+        images["name"] = name    
+        images["path"] = dict()
 
-    print(len(x_data))
-    print(len(y_data))
-    print(len(folders))
-    print("==============")
+        past_g = ""
+        past_c = ""
 
-    return np.array(x_data), np.array(y_data)
+        print(name)
+        check_change= False
+
+        for name_son in folders_son:
+            
+            folder_property = name_son.split('_')
+            temp_len = len(folder_property) - 1
+            now_g = folder_property[temp_len-1]
+            now_c = folder_property[temp_len]
+            
+            if past_g != now_g :
+                check_change = True
+            
+            if past_c != now_c :
+                check_change = True
+            
+            if check_change:
+                
+                if not int( now_g[1:3] ) in images["path"]:
+                    images["path"][ int( now_g[1:3] ) ] = dict()
+
+                past_g = now_g
+                past_c = now_c
+                check_change= False
+            
+            leaf_image_dir = len(os.listdir(image_dir + name + "/" + name_son))
+            
+            images["path"][ int( now_g[1:3] ) ][ int(now_c[1:3]) ] = []
+            
+            for file in glob.glob(image_dir + name + "/" + name_son + "/*"):
+                #ex) ApplyEyeMakeup_G01_C01
+                count= count+1
+
+                identity = str(file).split('.')
+                if identity[len(identity)-1] != 'jpg':
+                    continue
+                images["path"][ int( now_g[1:3] ) ][ int(now_c[1:3]) ].append(file)
+
+        x_data.append(images)
+
+    print(len(x_data))    
+    print(x_data[1]["name"])
+    print(len(x_data[1]["path"]))
+    print(len(x_data[1]["path"][1] ))
+    print(len(x_data[1]["path"][1][2] ))
+    print(x_data[1]["path"][1][2][3] )
+    '''
+        dataset UCF-101 - >x_data  hash structure tree
+        x_data[1]          ["path"][1]  [2]  [3]
+        x_data[scene_order]
+              [random name order of scene]
+        x_data[scene_order]["name"]
+        x_data[scene_order]["path"]
+                                   [1]
+                                   [g01 = longcut01]
+                                        [1]
+                                        [c01 = cut01]
+                                             [0] = "/ho...."
+                                             [random order of image]
+    '''
+    return np.array(x_data)
+
+def image_read(file_path):
+    img_ = cv2.imread(file_path)
+    img_ = np.transpose(img_, (2, 0, 1))
+    return img_
 
 def get_image_shape():
-    img_shape =None
     global image_dir
+    global shape
+    shape = None
 
-    return img_shape
+    return shape
 
-'''
+'''##faces apart from the rest
 def Img_load(image_path, img_size ):
     x_data = []
     y_data = []
@@ -170,3 +227,7 @@ def Data_split(x_data, train_test_ratio = 0.7):
 def Weight_load(model, weights_path):
     model.load_weights(weights_path)
     return model
+
+if __name__ == "__main__":
+    init_dataloader()
+    Img_loader()
