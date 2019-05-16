@@ -15,6 +15,8 @@ from keras.layers.pooling import MaxPooling2D, AveragePooling2D, MaxPooling3D, A
 from keras.models import Model
 from keras.layers.core import Lambda, Flatten, Dense
 import math
+from keras.layers import Conv2DTranspose, Conv3DTranspose
+
 
 
 def CN3D(video_info=None ,sampling_frame= 32,  vid_net_mid_depth = 3):
@@ -25,8 +27,8 @@ def CN3D(video_info=None ,sampling_frame= 32,  vid_net_mid_depth = 3):
     video_size = None
 
     if not video_size:
-        W = 128
-        H = 128
+        W = 256
+        H = 256
     else:
         W = video_size[0]
         H = video_size[1]
@@ -56,7 +58,7 @@ def CN3D(video_info=None ,sampling_frame= 32,  vid_net_mid_depth = 3):
     p_num = 2
     
     for i in range(vid_net_mid_depth):
-        fc_mid = Conv3D(filters= 256, dilation_rate=(1, p_num, p_num), kernel_size = 3, padding='same')(fc_mid)
+        fc_mid = Conv3D(filters= 256, dilation_rate= p_num, kernel_size = 3, padding='same')(fc_mid)
         fc_mid = Bat(fc_mid)
         fc_mid = Activ(fc_mid)
         p_num = p_num * 2
@@ -191,6 +193,7 @@ def network_generate(depth, sampling_frame, vid_shape=None, vid_net_mid_depth=3,
     return final_model
 
 
+ 
 if __name__ == "__main__":
     t_N = CN3D()
     t_N.summary()
