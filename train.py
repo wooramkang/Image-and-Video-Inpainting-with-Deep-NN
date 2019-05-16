@@ -1,3 +1,3 @@
+from model import *
+from DataWeight_load import *
 
-
-datadir = /recognition_research/3D_model/DATASET

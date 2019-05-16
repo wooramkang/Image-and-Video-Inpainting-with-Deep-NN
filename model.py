@@ -16,7 +16,8 @@ from keras.models import Model
 from keras.layers.core import Lambda, Flatten, Dense
 import math
 from keras.layers import Conv2DTranspose, Conv3DTranspose
-
+from keras.optimizers import adam
+from DataWeight_load import *
 
 
 def CN3D(video_info=None ,sampling_frame= 8,  vid_net_mid_depth = 3):
@@ -204,16 +205,13 @@ def CombCN(video_size, sampling_frame, frame_3DCN, frame_net_mid_depth = 4):
     
     return image_Comb3DCN
 
-from keras.optimizers import adam
-from DataWeight_load import *
-
 def network_generate(depth, sampling_frame, vid_shape=None, vid_net_mid_depth=3, frame_net_mid_depth=4):
     # loss_f = loss of 3DNN + loss of CombCN
     # loss_CombCN = Sig( M * G(V,M,I) - V )....
     loss = None
     optimazer = None
     final_model =None
-
+    
     if vid_shape is None:
         vid_shape = get_video_shape()
         
@@ -225,8 +223,7 @@ def network_generate(depth, sampling_frame, vid_shape=None, vid_net_mid_depth=3,
     
     return final_model
 
-
- 
+ ## to check shapes of models to train
 if __name__ == "__main__":
     t_N = CN3D()
     t_N.summary()

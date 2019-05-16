@@ -10,39 +10,49 @@ import cv2
 import PIL
 import keras
 from keras.models import Model
-
 global default_dir
-default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
+global image_dir
+global video_dir
 
 #2019. 05 .16 video to images & only image stream loader // wooramkang
 
-def video_loader(video_dir=None, sampling_size = None):
+def __init_dataloader__ ():
+    
+    global default_dir
+    global image_dir
+    global video_dir
+    default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
+    video_dir = default_dir
+    image_dir = default_dir
 
+def set_image_dir(t_str):
+    global image_dir
+    image_dir= t_str
+
+def set_video_dir(t_str):
+    global video_dir
+    video_dir= t_str
+
+def Video_loader(sampling_size = 30):
     video_list = None
     video_streams = None
     video_shape = None
-    
-    if video_dir is None:
-        video_dir = default_dir
+    global video_dir
 
-    if sampling_size is None:
-        sampling_size = 30
 
     return video_list, video_streams, video_shape
 
-def get_video_shape(video_dir=None):
-    global default_dir
+def get_video_shape():
     video_shape =None
-
-    if video_dir is None:
-        video_dir = default_dir
+    global video_dir
 
     return video_shape
 
-def Img_load(image_path, img_szie ):
+def Img_loader(image_dir, img_szie):
     x_data = []
     y_data = []
-    default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
+    global image_dir
+
     # glob.glob("images/*"):
     folders = os.listdir(image_path)
     for name in folders:
@@ -70,6 +80,13 @@ def Img_load(image_path, img_szie ):
     print("==============")
 
     return np.array(x_data), np.array(y_data)
+
+def get_image_shape():
+    img_shape =None
+    global image_dir
+
+    return img_shape
+
 '''
 def Img_load(image_path, img_size ):
     x_data = []
@@ -88,11 +105,10 @@ def Img_load(image_path, img_size ):
 
             if identity[len(identity)-1] != 'jpg':
                 continue
-            '''
+            
             #written by wooramkang 2018.09. 14
             #for broken images, you should check the images if it's okay or not
             
-            '''
             with open(file, 'rb') as f:
                 check_chars = f.read()[-2:]
                 if check_chars != b'\xff\xd9':
@@ -130,6 +146,26 @@ def Img_load(image_path, img_size ):
     return np.array(x_data), np.array(y_data)
 '''
 
+def Data_split(x_data, train_test_ratio = 0.7):
+    #params
+    #to split data to train and validate OR to train and test
+    
+    x_train = []
+    x_test = []
+    
+    data_len = len(x_data)
+    train_len = int(data_len * train_test_ratio)
+
+    train_list = range(train_len)
+    test_list = range(train_len, data_len)
+
+    for i in train_list:
+        x_train.append(x_data[i])
+        
+    for i in test_list:
+        x_test.append(x_data[i])
+        
+    return np.array(x_train), np.array(x_test)
 
 def Weight_load(model, weights_path):
     model.load_weights(weights_path)
