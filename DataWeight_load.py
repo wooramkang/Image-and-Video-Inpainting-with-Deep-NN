@@ -16,14 +16,14 @@ global video_dir
 
 #2019. 05 .16 video to images & only image stream loader // wooramkang
 
-def set_video_dir(t_str):
+def Set_video_dir(t_str):
     global video_dir
     video_dir= t_str
-def set_image_dir(t_str):
+def Set_image_dir(t_str):
     global image_dir
     image_dir= t_str
 
-def init_dataloader():
+def Init_dataloader():
     global default_dir
     global image_dir
     global video_dir
@@ -42,16 +42,20 @@ def Img_loader():
         dataset UCF-101 - >x_data  hash structure tree i made
 
         x_data[1]          ["path"][1]  [2]  [3]
+              [start from 0]
         x_data[scene_order]
               [random name order of scene]
         x_data[scene_order]["name"]
         x_data[scene_order]["path"]
                                    [1]
                                    [g01 = longcut01]
+                                   [start from 1]
                                         [1]
                                         [c01 = cut01]
+                                        [start from 1]
                                              [0] = "/ho...."
                                              [random order of image]
+                                             [start from 0]
     '''
     x_data = []
     global image_dir
@@ -103,29 +107,36 @@ def Img_loader():
                 identity = str(file).split('.')
                 if identity[len(identity)-1] != 'jpg':
                     continue
-                images["path"][ int( now_g[1:3] ) ][ int(now_c[1:3]) ].append(file)
 
+                images["path"][ int( now_g[1:3] ) ][ int(now_c[1:3]) ].append(file)
+                
         x_data.append(images)
 
     print(len(x_data))    
-    print(x_data[1]["name"])
+    print(x_data[0]["name"])
     print(len(x_data[1]["path"]))
     print(len(x_data[1]["path"][1] ))
-    print(len(x_data[1]["path"][1][2] ))
-    print(x_data[1]["path"][1][2][3] )
+    print(len(x_data[1]["path"][1][1] ))
+    print(x_data[1]["path"][1][2][0] )
     
     return np.array(x_data)
 
 
-def image_read(file_path):
-    img_ = cv2.imread(file_path)
-    img_ = np.transpose(img_, (2, 0, 1))
-    return img_
+def Image_read(file_path):
+    
+    img = cv2.imread(file_path)
+    '''
+    img = cv2.resize(img,(128,128))
+    #IN A LOT OF PAPER,
+    #RESIZE 128 * 128
+    '''
+    img = np.transpose(img, (2, 0, 1))
+    return img
 
-def get_image_shape(image_data):
+def Get_image_shape(image_data):
 
     global shape
-    shape = None
+    shape = image_data.get_shape()
 
     return shape
 
@@ -172,8 +183,7 @@ def Video_loader(sampling_size = 30):
     return video_list, video_streams, video_shape
 '''
 
-
 #FOR DATALOADER TEST
 if __name__ == "__main__":
-    init_dataloader()
+    Init_dataloader()
     Img_loader()

@@ -42,10 +42,10 @@ def CN3D(video_info=None ,sampling_frame= 8,  vid_net_mid_depth = 3):
     e0 = Conv3D(filters=16,padding='same', kernel_size=(5,5,5))(input_video)
     e0 = Bat(e0)
     e0 = Activ(e0)
-    print(e0.get_shape())
-    #WITH NO CONCATENATE FOR ENCODING IN 3DCN BUT WITH CONCAT FOR ENCODING IN combination part
+    print(e0.get_shape())Init_dataloader()
+    #WITH NO CONCATENATE Init_dataloader()DING IN 3DCN BUT WITH CONCAT FOR ENCODING IN combination part
 
-    e0_C = Conv3D(filters=32, padding='same', kernel_size=(3,3,3), strides =2)(e0)
+    e0_C = Conv3D(filtersInit_dataloader()ding='same', kernel_size=(3,3,3), strides =2)(e0)
     e0_C = Bat(e0_C)
     e0_C = Activ(e0_C)
     print(e0_C.get_shape())
@@ -205,23 +205,21 @@ def CombCN(video_size, sampling_frame, frame_3DCN, frame_net_mid_depth = 4):
     
     return image_Comb3DCN
 
-def network_generate(depth, sampling_frame, vid_shape=None, vid_net_mid_depth=3, frame_net_mid_depth=4):
+def network_generate(sampling_frame, data_shape, vid_net_mid_depth=3, frame_net_mid_depth=4):
     # loss_f = loss of 3DNN + loss of CombCN
     # loss_CombCN = Sig( M * G(V,M,I) - V )....
-    init_dataloader()
+    # final_model => sig ( CN3D  => combCN)
+    Init_dataloader()
+
     loss = None
     optimazer = None
     final_model =None
     
-    if vid_shape is None:
-        vid_shape = get_video_shape()
-        
-    input_video = input((vid_shape))
-    Adam = adam() # Default
+    CN3D_model = CN3D(video_info=None ,sampling_frame= 8,  vid_net_mid_depth = 3)
 
     #final_model = Model( , )
     #final_model.summary()
-    
+    final_model = CN3D_model     # CN3D_MODEL IS NOT REAL FINAL// JUST FOR TEST
     return final_model
 
  ## to check shapes of models to train
