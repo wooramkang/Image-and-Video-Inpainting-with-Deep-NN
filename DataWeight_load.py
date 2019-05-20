@@ -30,8 +30,8 @@ def Init_dataloader():
     global shape
 
     default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
-    set_video_dir(default_dir)
-    set_image_dir(default_dir)
+    Set_video_dir(default_dir)
+    Set_image_dir(default_dir)
     shape = None
 
 def Img_loader():
