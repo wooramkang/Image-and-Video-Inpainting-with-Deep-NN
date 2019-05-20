@@ -134,10 +134,11 @@ def Image_read(file_path):
     return img
 
 def Get_image_shape(image_data):
-
     global shape
-    shape = image_data.get_shape()
+    if shape != None:
+        return shape
 
+    shape = image_data.get_shape()
     return shape
 
 def Data_split(x_data, train_test_ratio = 0.7):
@@ -166,14 +167,12 @@ def Weight_load(model, weights_path):
     return model
 
 '''
-
 def get_video_shape(image_data):
     
     global shape
     shape =None
 
     return shape
-
 def Video_loader(sampling_size = 30):
     video_list = None
     video_streams = None
