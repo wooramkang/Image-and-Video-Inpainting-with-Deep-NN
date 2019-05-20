@@ -11,7 +11,7 @@ def train():
     epoch = 40000
 
     if img_shape is None:
-        img_shape = get_image_shape()
+        img_shape = Get_image_shape()
 
     raw_data = Img_loader()
     train_data, val_data = Data_split(raw_data, train_test_ratio = 0.7)
