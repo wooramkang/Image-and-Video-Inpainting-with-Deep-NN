@@ -20,26 +20,25 @@ from keras.optimizers import adam, Adam
 from DataWeight_load import *
 
 
-def CN3D(video_info=None , input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
+def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)
     
-    '''
     video_size = None
     
     if not video_size:
-        W = 160
-        H = 120
+        W = 320
+        H = 240
     else:
-        W = video_info[0]
-        H = video_info[1]
+        W = video_size[0]
+        H = video_size[1]
+    
     W = int(W/2)
     H = int(H/2)
-
+    
     if input_video is None:
         input_video = Input( shape=(sampling_frame, W, H, 3) )
-    '''
-
+    
     #print(input_video.get_shape())
     e0 = Conv3D(filters=32,padding='same', kernel_size=(5,5,5))(input_video)
     e0 = Bat(e0)
@@ -133,7 +132,7 @@ def CN3D(video_info=None , input_video = None, sampling_frame= 8,  vid_net_mid_d
     return video_3DCN
 
 
-def CombCN(video_size=None, sampling_frame=8, frame_net_mid_depth = 4):
+def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_net_mid_depth = 4):
     #frame_3DCN => total frames or jsut frame of Vk in Vin 
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)
@@ -145,9 +144,12 @@ def CombCN(video_size=None, sampling_frame=8, frame_net_mid_depth = 4):
     else:
         W = video_size[0]
         H = video_size[1]
-        
-    input_frame = Input( shape=(W, H, 3) )
-    input_video = Input( shape=(sampling_frame, W/2, H/2, 3) )
+    
+    if input_frame is None:
+        input_frame = Input( shape=(W, H, 3) )
+    if input_video is None:
+        input_video = Input( shape=(sampling_frame, W/2, H/2, 3) )
+
     print(input_frame.get_shape())
 
     e0 = Conv2D(filters=32,padding='same', kernel_size=(5,5))(input_frame)
@@ -161,7 +163,8 @@ def CombCN(video_size=None, sampling_frame=8, frame_net_mid_depth = 4):
     e0_C = Activ(e0_C)
     print(e0_C.get_shape())
 
-    skip_subnet = CN3D(video_info=None , input_video = input_video, sampling_frame= 8,  vid_net_mid_depth = 3)
+    #skip_subnet = CN3D(video_info=None , input_video = input_video, sampling_frame= 8,  vid_net_mid_depth = 3)
+    skip_subnet = input_video
     size_subnet = skip_subnet.get_shape()
 
     # IS IT WHAT THE PAPER SAYS? NOT SURE
@@ -250,28 +253,60 @@ def CombCN(video_size=None, sampling_frame=8, frame_net_mid_depth = 4):
     d_out = Activation('tanh')(d_out)
     print(d_out.get_shape())
 
-    image_Comb3DCN = Model([input_frame, input_video], d_out)
-    
-    return image_Comb3DCN
+    return d_out
+
+# loss_total = loss of 3DNN + loss of CombCN
+# loss_CombCN = Sig( M * G(V,M,I) - V )....
+# final_model => sig ( CN3D  => combCN)
+from keras.losses import mse
+
+#def loss(Y_true, Y_pred):
+#    return loss
 
 def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
-    # loss_f = loss of 3DNN + loss of CombCN
-    # loss_CombCN = Sig( M * G(V,M,I) - V )....
-    # final_model => sig ( CN3D  => combCN)
     Init_dataloader()
+    optimizer_subnet = Adam(lr=0.005)
+    optimizer_mainnet = Adam(lr=0.005)
+    optimizer_final = Adam(lr=0.005)
 
-    loss = 
-    optimizer = Adam(lr=0.001)
-    final_model =None
+    input_video = Input( shape=(sampling_frame, 160, 120, 3) )
+    input_frame = Input( shape=(320, 240, 3) )
+
+
+    cn3d = CN3D(input_video=input_video)
+    CN3D_model = Model(input_video, cn3d)
+    CN3D_model.summary()
+
+    def loss_3DCN():
+        cn3d_loss = mse( CN3D_model(input_video), input_video )
+        return cn3d_loss
+
+    CN3D_model.add_loss(loss_3DCN())
+    CN3D_model.compile(optimizer=optimizer_subnet)
+
     
-    combCN_model = CombCN()
-    combCN_model.summary()
-    #CN3D_model = CN3D() # CN3D_MODEL IS NOT REAL FINAL// JUST FOR TEST
-    #final_model = CN3D()
-    #final_model.summary()
-    final_model = combCN_model     
-    final_model.compile(optimizer=optimizer, loss= loss )
-    return final_model
+
+    combCN= CombCN(input_frame= input_frame, input_video = CN3D_model(input_video) )
+    CombCN_model = Model([input_frame, input_video], combCN)
+    CombCN_model.summary()
+    CombCN_model.compile(optimizer=optimizer_mainnet, lose = 'mse' )
+
+    final_model = Model( inputs=[input_frame, input_video], outputs=[ CN3D_model(input_video), CombCN_model([input_frame, input_video]) ])
+    final_model.summary()
+    alpha = 0.7
+    beta = 1.0
+    '''
+    def loss_total():
+        
+        l1 = K.sum(mse( CombCN_model( [input_frame, input_video] ), input_frame)) * alpha
+        l2 = K.sum(mse( CN3D_model(input_video), input_video ))* beta
+        t_loss = l1 + l2
+        return t_loss
+    final_model.add_loss(loss_total())
+    '''
+    final_model.compile(optimizer=optimizer_final, loss={'model_1' : 'mse', 'model_2' : 'mse'},
+                                                    loss_weights={'model_1' :alpha , 'model_2':beta} )
+    return CN3D_model, CombCN_model, final_model
 
  ## to check shapes of models to train
 if __name__ == "__main__":
