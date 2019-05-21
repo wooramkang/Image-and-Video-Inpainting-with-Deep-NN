@@ -259,10 +259,23 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
 # loss_CombCN = Sig( M * G(V,M,I) - V )....
 # final_model => sig ( CN3D  => combCN)
 from keras.losses import mse
+'''
+def loss(Y_true, Y_pred):
+   loss = K.sum(....)
+   return loss
+@staticmethod
+def l1(y_true, y_pred):
+    
+    if K.ndim(y_true) == 4:
+        return K.mean(K.abs(y_pred - y_true), axis=[1,2,3])
 
-#def loss(Y_true, Y_pred):
-#   loss = K.sum(....)
-#   return loss
+    elif K.ndim(y_true) == 3:
+        return K.mean(K.abs(y_pred - y_true), axis=[1,2])
+
+    else:
+        raise NotImplementedError("not possible")
+
+'''
 
 def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
     Init_dataloader()
