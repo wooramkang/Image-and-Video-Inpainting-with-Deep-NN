@@ -261,7 +261,8 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
 from keras.losses import mse
 
 #def loss(Y_true, Y_pred):
-#    return loss
+#   loss = K.sum(....)
+#   return loss
 
 def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
     Init_dataloader()
@@ -276,25 +277,27 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
     cn3d = CN3D(input_video=input_video)
     CN3D_model = Model(input_video, cn3d)
     CN3D_model.summary()
-
+    
+    '''
     def loss_3DCN():
         cn3d_loss = mse( CN3D_model(input_video), input_video )
         return cn3d_loss
+        
+        CN3D_model.add_loss(loss_3DCN())
+    '''
 
-    CN3D_model.add_loss(loss_3DCN())
-    CN3D_model.compile(optimizer=optimizer_subnet)
-
-    
+    CN3D_model.compile(optimizer=optimizer_subnet, loss={'activation_1' : 'mse'} )
 
     combCN= CombCN(input_frame= input_frame, input_video = CN3D_model(input_video) )
     CombCN_model = Model([input_frame, input_video], combCN)
     CombCN_model.summary()
-    CombCN_model.compile(optimizer=optimizer_mainnet, lose = 'mse' )
+    CombCN_model.compile(optimizer=optimizer_mainnet, loss={'activation_2' : 'mse'})
 
-    final_model = Model( inputs=[input_frame, input_video], outputs=[ CN3D_model(input_video), CombCN_model([input_frame, input_video]) ])
+    final_model = Model( inputs=[input_frame, input_video], outputs=[ CN3D_model(input_video), CombCN_model( [input_frame, input_video] ) ])
     final_model.summary()
     alpha = 0.7
     beta = 1.0
+    
     '''
     def loss_total():
         
@@ -304,6 +307,7 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
         return t_loss
     final_model.add_loss(loss_total())
     '''
+    
     final_model.compile(optimizer=optimizer_final, loss={'model_1' : 'mse', 'model_2' : 'mse'},
                                                     loss_weights={'model_1' :alpha , 'model_2':beta} )
     return CN3D_model, CombCN_model, final_model
