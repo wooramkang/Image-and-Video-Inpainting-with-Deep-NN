@@ -169,7 +169,7 @@ def Data_split(x_data, train_test_ratio = 0.7):
     return np.array(x_train), np.array(x_test)
 
 def Train_dataloader(train_data):
-
+    
     while True:
         for scene in range(len(train_data)):
             for longcut in train_data[scene]["path"]:
@@ -179,9 +179,8 @@ def Train_dataloader(train_data):
                         yield cv2.imread(image_path)
 
 class MaskGenerator():
-    
-    def __init__(self, height, width, channels=3, rand_seed=None, filepath=None):
-        # MaskGenerator from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/util.py
+# MaskGenerator from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/util.py
+    def __init__(self, height, width, channels=3, rand_seed=None, filepath=None):    
         """Convenience functions for generating masks to be used for inpainting training
         
         Arguments:

@@ -17,6 +17,7 @@ from keras.layers.core import Lambda, Flatten, Dense
 import math
 from keras.layers import Conv2DTranspose, Conv3DTranspose, Reshape
 from keras.optimizers import adam, Adam
+from pconv_layer import PConv2D
 from DataWeight_load import *
 
 
@@ -281,7 +282,7 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
     Init_dataloader()
     optimizer_subnet = Adam(lr=0.005)
     optimizer_mainnet = Adam(lr=0.005)
-    optimizer_final = Adam(lr=0.005)
+    optimizer_final = Adam(lr=0.0001)
 
     input_video = Input( shape=(sampling_frame, 160, 120, 3) )
     input_frame = Input( shape=(320, 240, 3) )
@@ -290,7 +291,6 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
     cn3d = CN3D(input_video=input_video)
     CN3D_model = Model(input_video, cn3d)
     CN3D_model.summary()
-    
     '''
     def loss_3DCN():
         cn3d_loss = mse( CN3D_model(input_video), input_video )
@@ -298,7 +298,6 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
         
         CN3D_model.add_loss(loss_3DCN())
     '''
-
     CN3D_model.compile(optimizer=optimizer_subnet, loss={'activation_1' : 'mse'} )
 
     combCN= CombCN(input_frame= input_frame, input_video = CN3D_model(input_video) )
@@ -320,7 +319,6 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
         return t_loss
     final_model.add_loss(loss_total())
     '''
-    
     final_model.compile(optimizer=optimizer_final, loss={'model_1' : 'mse', 'model_2' : 'mse'},
                                                     loss_weights={'model_1' :alpha , 'model_2':beta} )
     return CN3D_model, CombCN_model, final_model
