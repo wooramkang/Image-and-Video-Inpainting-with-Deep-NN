@@ -1,4 +1,4 @@
-#Partial convolution from pconv_layer.py of https://github.com/MathiasGruber/PConv-Keras
+#Partial convolution 2D from pconv_layer.py of https://github.com/MathiasGruber/PConv-Keras
 from keras.utils import conv_utils
 from keras import backend as K
 from keras.engine import InputSpec

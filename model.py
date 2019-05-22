@@ -18,6 +18,7 @@ import math
 from keras.layers import Conv2DTranspose, Conv3DTranspose, Reshape
 from keras.optimizers import adam, Adam
 from pconv_layer import PConv2D
+#NEED TO IMPORT PConv3D
 from DataWeight_load import *
 
 
@@ -322,8 +323,13 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
     final_model.compile(optimizer=optimizer_final, loss={'model_1' : 'mse', 'model_2' : 'mse'},
                                                     loss_weights={'model_1' :alpha , 'model_2':beta} )
     return CN3D_model, CombCN_model, final_model
+#ref of LATEX for diagrams
+#https://www.overleaf.com/learn/latex/Code_listing
+#https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
+#ref of plotting NN with LATEX
+#https://github.com/HarisIqbal88/PlotNeuralNet
 
- ## to check shapes of models to train
+## to check shapes of models to train
 if __name__ == "__main__":
     network_generate()
     

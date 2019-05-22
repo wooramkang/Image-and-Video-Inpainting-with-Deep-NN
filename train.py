@@ -9,7 +9,7 @@ def train_one_epoch(model, train_data, val_data, learning_rate, ):
 def train():
     # TRAIN EPOCH
     epoch = 40000
-
+    
     if img_shape is None:
         img_shape = Get_image_shape()
 
