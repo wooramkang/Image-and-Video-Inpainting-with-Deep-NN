@@ -35,7 +35,7 @@ def Init_dataloader():
     global video_dir
     global shape
 
-    default_dir = "/home/rd/recognition_research/3D_model/DATASET/UCF-101/"
+    default_dir = "../../recognition_research/3D_model/DATASET/UCF-101/"
     Set_video_dir(default_dir)
     Set_image_dir(default_dir)
     shape = None
@@ -129,23 +129,6 @@ def Img_loader():
 
     return x_data
 
-
-def Image_read(file_path):
-    img = cv2.imread(file_path)
-    '''
-    img = cv2.resize(img,(128,128))
-    #IN A LOT OF PAPER,
-    #RESIZE 128 * 128
-    #channel first
-    #img = np.transpose(img, (2, 0, 1))
-    '''
-    img = np.transpose(img, (1, 0, 2))
-    return img
-
-def Get_image_shape():
-    global shape 
-    return shape
-
 def Data_split(x_data, train_test_ratio = 0.7):
     #params
     #to split data to train and validate OR to train and test
@@ -177,7 +160,7 @@ def data_batch_loader_forward(data_batch):
                     for image_path in data_batch[scene]["path"][longcut][cut]:
                         #to check working properly
                         #print(image_path)
-                        yield cv2.imread(image_path), cut
+                        yield Image_read(image_path), cut
 
 def data_batch_loader_backward(data_batch):
     while True:
@@ -189,30 +172,7 @@ def data_batch_loader_backward(data_batch):
                     for image_path in reversed(data_batch[scene]["path"][longcut][cut]):
                         #to check working properly
                         #print(image_path)
-                        yield cv2.imread(image_path), cut
-
-def image_normalization(image_batch):
-    image_batch = image_batch - 127.5
-    image_batch = np.divide(image_batch, 127.5)
-    return image_batch
-
-def image_to_origin(image_batch):
-    image_batch = np.multiply(image_batch, 127.5)
-    image_batch = image_batch + 127.5
-    return image_batch
-
-def image_masking(image_batch, mask_batch):
-    if len(image_batch) != len(mask_batch):
-        return None
-    
-    masked_image_batch = []
-
-    for i in range(len(image_batch)):
-        masked_image = deepcopy(image_batch[i])
-        masked_image[ mask_batch[i] == 0 ] = 255
-        masked_image_batch.append(masked_image)
-        
-    return np.array(masked_image_batch)
+                        yield Image_read(image_path), cut
 
 def iter_to_one_batch(iter, batch_size):
     data_batch = []
@@ -240,6 +200,55 @@ def mask_to_one_batch(mask_loader, batch_size):
         mask_batch.append(mask_loader._generate_mask() )
 
     return mask_batch
+
+def Image_read(file_path):
+    img = cv2.imread(file_path)
+    '''
+    img = cv2.resize(img,(128,128))
+    #IN A LOT OF PAPER,
+    #RESIZE 128 * 128
+    #channel first
+    #img = np.transpose(img, (2, 0, 1))
+    '''
+    img = np.transpose(img, (1, 0, 2))
+    return img
+
+def Get_image_shape():
+    global shape 
+    return shape
+
+def image_normalization(image_batch):
+    image_batch = image_batch - 127.5
+    image_batch = np.divide(image_batch, 127.5)
+    return image_batch
+
+def image_to_origin(image_batch):
+    image_batch = np.multiply(image_batch, 127.5)
+    image_batch = image_batch + 127.5
+    return image_batch
+
+def image_to_half_size(image_batch):
+    shape = image_batch[0].shape
+    new_image_batch = []
+
+    for image in image_batch:
+        new_image_batch.append(  np.transpose(  cv2.resize(image, (int(shape[0]/2), int(shape[1]/2) ) ) , (1, 0, 2)))
+
+    return np.array(new_image_batch)
+
+def image_masking(image_batch, mask_batch):
+    if len(image_batch) != len(mask_batch):
+        return None
+    
+    masked_image_batch = []
+
+    for i in range(len(image_batch)):
+        masked_image = deepcopy(image_batch[i])
+        masked_image[ mask_batch[i] == 0 ] = 255
+        masked_image_batch.append(masked_image)
+        
+    return np.array(masked_image_batch)
+
 
 class MaskGenerator():
 # MaskGenerator from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/util.py

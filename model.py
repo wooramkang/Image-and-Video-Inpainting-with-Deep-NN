@@ -48,7 +48,7 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     #print(e0.get_shape())
     #WITH NO CONCATENATE Init_dataloader()DING IN 3DCN BUT WITH CONCAT FOR ENCODING IN combination part
 
-    e0_C = Conv3D(filters= 64,  padding='same', kernel_size=(3,3,3), strides =2)(e0)
+    e0_C = Conv3D(filters= 64,  padding='same', kernel_size=4, strides =2)(e0)
     e0_C = Bat(e0_C)
     e0_C = Activ(e0_C)
     #print(e0_C.get_shape())
@@ -58,7 +58,7 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     e1 = Activ(e1)
     #print(e1.get_shape())
 
-    e1_C = Conv3D(filters=256, padding='same', kernel_size=3, strides = 2)(e1)
+    e1_C = Conv3D(filters=256, padding='same', kernel_size=4, strides = 2)(e1)
     e1_C = Bat(e1_C)
     e1_C = Activ(e1_C)
     #print(e1_C.get_shape())
@@ -67,13 +67,7 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     e2 = Bat(e2)
     e2 = Activ(e2)
     #print(e2.get_shape())
-    '''
-    e2_C = Conv3D(filters=512, padding='same', kernel_size=3, strides = 2)(e2)
-    e2_C = Bat(e2_C)
-    e2_C = Activ(e2_C)
-    print(e2_C.get_shape())
-    fc_mid = e2_C
-    '''
+
     fc_mid = e2
     p_num = 2
     
@@ -84,17 +78,6 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
         #print(fc_mid.get_shape())
         p_num = p_num * 2
 
-    '''
-    #fc_mid = Deconvolution3D(strides=2, filters=64, kernel_size= 4, padding='same')(fc_mid)
-    d0_C = Concatenate()([fc_mid, e2_C])    
-    d0_C = UpSampling3D()(d0_C)
-    d0_C = Conv3D(strides=1, filters=256, kernel_size= 4, padding='same')(d0_C)
-    d0_C = Bat(d0_C)
-    d0_C = Activ(d0_C)
-    print(d0_C.get_shape())
-    
-    d0_CC = Concatenate()([d0_C, e2])    
-    '''
     d0_CC = Concatenate()([fc_mid, e2])    
     d0_CC = Conv3D(filters=256,padding='same', kernel_size=3)(d0_CC)
     d0_CC = Bat(d0_CC)
@@ -123,7 +106,7 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     #print(d1_CC.get_shape())
 
     d2_CC = Concatenate()([d1_CC, e0])
-    d2_CC = Conv3D(filters=3, padding='same', kernel_size=3)(d2_CC)
+    d2_CC = Conv3D(filters=3, padding='same', kernel_size= 5)(d2_CC)
     d2_CC = Bat(d2_CC)
     d2_CC = Activation('tanh')(d2_CC)
     #print(d2_CC.get_shape())
@@ -178,12 +161,12 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     e0_C = Concatenate()([e0_C, skip_subnet])
     print(e0_C.get_shape())
 
-    e1 = Conv2D(filters=160, padding='same', kernel_size=(3,3))(e0_C)
+    e1 = Conv2D(filters=128, padding='same', kernel_size=(3,3))(e0_C)
     e1 = Bat(e1)
     e1 = Activ(e1)
     print(e1.get_shape())
 
-    e1_C = Conv2D(filters=256, padding='same', kernel_size=3, strides = 2)(e1)
+    e1_C = Conv2D(filters=256, padding='same', kernel_size=4, strides = 2)(e1)
     e1_C = Bat(e1_C)
     e1_C = Activ(e1_C)
     print(e1_C.get_shape())
@@ -193,7 +176,7 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     e2 = Activ(e2)
     print(e2.get_shape())
     
-    e2_C = Conv2D(filters=512, padding='same', kernel_size=3, strides = 2)(e2)
+    e2_C = Conv2D(filters=512, padding='same', kernel_size=4, strides = 2)(e2)
     e2_C = Bat(e2_C)
     e2_C = Activ(e2_C)
     print(e2_C.get_shape())
@@ -219,38 +202,38 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     d0_C = Concatenate()([d0_C, e2])    
     print(d0_C.get_shape())
 
-    d0_CC = Conv2D(filters=432,padding='same', kernel_size=3)(d0_C)
+    d0_CC = Conv2D(filters=512,padding='same', kernel_size=3)(d0_C)
     d0_CC = Bat(d0_CC)
     d0_CC = Activ(d0_CC)
     d0_CC = Concatenate()([d0_CC, e1_C])
     print(d0_CC.get_shape())
 
     d1 = UpSampling2D()(d0_CC)
-    d1 = Conv2D(strides=1, filters=324, kernel_size= 4, padding='same')(d1)
+    d1 = Conv2D(strides=1, filters=256, kernel_size= 4, padding='same')(d1)
     d1 = Bat(d1)
     d1 = Activ(d1)
     d1 = Concatenate()([d1, e1])    
     print(d1.get_shape())
 
-    d1_C = Conv2D(filters= 243, padding='same', kernel_size=3)(d1)
+    d1_C = Conv2D(filters= 128, padding='same', kernel_size=3)(d1)
     d1_C = Bat(d1_C)
     d1_C = Activ(d1_C)
     d1_C = Concatenate()([d1_C, e0_C])
     print(d1_C.get_shape())
     
     d1_CC = UpSampling2D()(d1_C)
-    d1_CC = Conv2D(strides=1, filters=131, kernel_size= 4, padding='same')(d1_CC)
+    d1_CC = Conv2D(strides=1, filters=64, kernel_size= 4, padding='same')(d1_CC)
     d1_CC = Bat(d1_CC)
     d1_CC = Activ(d1_CC)
     d1_CC = Concatenate()([d1_CC, e0])
     print(d1_CC.get_shape())
 
-    d2_CC = Conv2D(filters=74, padding='same', kernel_size=3)(d1_CC)
+    d2_CC = Conv2D(filters=32, padding='same', kernel_size=3)(d1_CC)
     d2_CC = Bat(d2_CC)
     d2_CC = Activ(d2_CC)
     print(d2_CC.get_shape())
 
-    d_out = Conv2D(filters=3, padding='same', kernel_size=3)(d2_CC)
+    d_out = Conv2D(filters=3, padding='same', kernel_size=4)(d2_CC)
     d_out = Bat(d_out)
     d_out = Activation('tanh')(d_out)
     print(d_out.get_shape())
