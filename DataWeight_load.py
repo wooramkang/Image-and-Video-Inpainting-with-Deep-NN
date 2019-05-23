@@ -16,7 +16,7 @@ from copy import deepcopy
 global default_dir
 global image_dir
 global video_dir
-
+global shape 
 #2019. 05 .16 video to images & only image stream loader // wooramkang
 
 def Set_video_dir(t_str):
@@ -25,7 +25,10 @@ def Set_video_dir(t_str):
 def Set_image_dir(t_str):
     global image_dir
     image_dir= t_str
-
+def Set_shape(size):
+    global shape
+    shape = size
+    
 def Init_dataloader():
     global default_dir
     global image_dir
@@ -121,27 +124,26 @@ def Img_loader():
     print(len(x_data[1]["path"][1] ))
     print(len(x_data[1]["path"][1][1] ))
     print(x_data[1]["path"][1][2][0] )
-    
+    img = Image_read(x_data[1]["path"][1][2][0])
+    Set_shape( img.shape )
+
     return x_data
 
 
 def Image_read(file_path):
-    
     img = cv2.imread(file_path)
     '''
     img = cv2.resize(img,(128,128))
     #IN A LOT OF PAPER,
     #RESIZE 128 * 128
+    #channel first
+    #img = np.transpose(img, (2, 0, 1))
     '''
-    img = np.transpose(img, (2, 0, 1))
+    img = np.transpose(img, (1, 0, 2))
     return img
 
-def Get_image_shape(image_data):
-    global shape
-    if shape != None:
-        return shape
-
-    shape = image_data.get_shape()
+def Get_image_shape():
+    global shape 
     return shape
 
 def Data_split(x_data, train_test_ratio = 0.7):
@@ -175,7 +177,7 @@ def data_batch_loader_forward(data_batch):
                     for image_path in data_batch[scene]["path"][longcut][cut]:
                         #to check working properly
                         #print(image_path)
-                        yield cv2.imread(image_path)
+                        yield cv2.imread(image_path), cut
 
 def data_batch_loader_backward(data_batch):
     while True:
@@ -187,7 +189,7 @@ def data_batch_loader_backward(data_batch):
                     for image_path in reversed(data_batch[scene]["path"][longcut][cut]):
                         #to check working properly
                         #print(image_path)
-                        yield cv2.imread(image_path)
+                        yield cv2.imread(image_path), cut
 
 def image_normalization(image_batch):
     image_batch = image_batch - 127.5
@@ -209,8 +211,35 @@ def image_masking(image_batch, mask_batch):
         masked_image = deepcopy(image_batch[i])
         masked_image[ mask_batch[i] == 0 ] = 255
         masked_image_batch.append(masked_image)
-
+        
     return np.array(masked_image_batch)
+
+def iter_to_one_batch(iter, batch_size):
+    data_batch = []
+    temp = None
+    __checker = None
+    count = 0 
+
+    for i in range(batch_size):
+        bef_checker = __checker
+        temp, __checker = next(iter)
+        count = i + 1
+        if (bef_checker != __checker) and ( i != 0 ):
+            break
+        data_batch.append( image_normalization(temp) )
+
+    for i in range(batch_size - count):
+        data_batch.append( data_batch[count] )
+
+    return np.array(data_batch)
+
+def mask_to_one_batch(mask_loader, batch_size):
+    mask_batch = []
+
+    for i in range(batch_size):
+        mask_batch.append(mask_loader._generate_mask() )
+
+    return mask_batch
 
 class MaskGenerator():
 # MaskGenerator from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/util.py
@@ -316,6 +345,9 @@ def Weight_load(model, weights_path):
     model.load_weights(weights_path)
     return model
 
+def Weight_save(model, weights_path):
+    model.save_weights(weights_path)
+    return True
 '''
 def get_video_shape(image_data):
     
@@ -333,6 +365,7 @@ def Video_loader(sampling_size = 30):
 '''
 
 #FOR DATALOADER TEST
+
 if __name__ == "__main__":
     Init_dataloader()
     train_data = Img_loader()

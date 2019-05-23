@@ -279,15 +279,14 @@ def l1(y_true, y_pred):
 
 '''
 
-def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
+def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
     Init_dataloader()
     optimizer_subnet = Adam(lr=0.005)
     optimizer_mainnet = Adam(lr=0.005)
     optimizer_final = Adam(lr=0.0001)
 
-    input_video = Input( shape=(sampling_frame, 160, 120, 3) )
-    input_frame = Input( shape=(320, 240, 3) )
-
+    input_frame = Input( shape=data_shape )
+    input_video = Input( shape=(sampling_frame, int(data_shape[0]/2), int(data_shape[1]/2), 3) )
 
     cn3d = CN3D(input_video=input_video)
     CN3D_model = Model(input_video, cn3d)
@@ -308,7 +307,7 @@ def network_generate(data_shape= None, sampling_frame=8, vid_net_mid_depth=3, fr
 
     final_model = Model( inputs=[input_frame, input_video], outputs=[ CN3D_model(input_video), CombCN_model( [input_frame, input_video] ) ])
     final_model.summary()
-    alpha = 0.7
+    alpha = 1.0#0.7
     beta = 1.0
     
     '''

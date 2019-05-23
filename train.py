@@ -2,32 +2,86 @@ from model import *
 from DataWeight_load import *
 from result_plot import *
 
-def train_one_epoch(model, train_data, val_data, learning_rate, ):
+def train_one_epoch(CN3D_model, CombCN_model, final_model,
+                    mask_loader, train_dataloader, val_dataloader, batch_size, frame_size):
     
-    return loss
+    vid_train_batch = [ iter_to_one_batch(train_dataloader, frame_size) for i in range(batch_size) ]
+    img_train_batch = [ frame_per_batch[frame_size-1] for frame_per_batch in vid_train_batch]
+    #for prediction task
+    #img_trian_batch = iter_to_one_batch(val_dataloader, batch_size)
+
+    vid_masked_batch = []
+    mask_batch = None
+
+    for i in range(batch_size):
+        mask_batch = mask_to_one_batch(mask_loader, frame_size)
+        frame_masked_batch = image_masking(vid_train_batch[i], mask_batch)
+        vid_masked_batch.append(frame_masked_batch)
+
+    vid_masked_batch = np.array(vid_masked_batch)
+    img_masked_batch = [ frame_per_batch[frame_size-1] for frame_per_batch in vid_masked_batch]
+    
+    cn3d_loss = CN3D_model.train_on_batch(vid_masked_batch, vid_train_batch)
+    comb_loss = CombCN_model.train_on_batch ( [img_masked_batch, vid_masked_batch], img_train_batch )
+    final_loss = final_model.train_on_batch ( [img_masked_batch, vid_masked_batch], [vid_train_batch, img_train_batch])
+
+    epoch_loss = (cn3d_loss + comb_loss + final_loss) / 3
+
+    return epoch_loss
 
 def train():
     # TRAIN EPOCH
-    epoch = 40000
-    
-    if img_shape is None:
-        img_shape = Get_image_shape()
+    BATCH_SIZE = 4
+    FRAME_SIZE = 8
+    EPOCH = 40000
+    SAVE_TERM_PER_EPOCH = 10
+    MODEL_DIR = "/home/rd/"
+    img_shape = None #(320, 240, 3)
+    train_dataloader_forward = None 
+    train_dataloader_backward = None
+    val_dataloader_forward = None
+    val_dataloader_backward = None
 
     raw_data = Img_loader()
-    train_data, val_data = Data_split(raw_data, train_test_ratio = 0.7)
 
-    train_model = network_generate(sampling_frame=8, data_shape=img_shape, 
-                                    vid_net_mid_depth=3, frame_net_mid_depth=4)
-    
-    for i in range(epoch):
-        loss = train_one_epoch(train_model, train_data, val_data, learning_rate = 0.01)    
+    if img_shape is None:
+        img_shape = Get_image_shape()
+        print("###")
+        print(img_shape)
+        print("###")
 
-    # FUTURE WORK
+    mask_loader = MaskGenerator(img_shape[0], img_shape[1])#._generate_mask()
+    train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
     
-    Init_plot()
-    sample_data = None
-    sample_result=train_model(sample_data)
-    result_plot(sample_data, sample_result)
+    train_dataloader_forward = data_batch_loader_forward(train_data)
+    train_dataloader_backward = data_batch_loader_backward(train_data)
+    #FUTURE WORK
+    #val_dataloader_forward = data_batch_loader_forward(val_data)
+    #val_dataloader_backward = data_batch_loader_backward(val_data)
+
+    CN3D_model, CombCN_model, final_model = network_generate(sampling_frame=8, data_shape=img_shape, 
+                                                            vid_net_mid_depth=3, frame_net_mid_depth=4)
+    
+    for i in range(EPOCH):
+
+        forward_loss = train_one_epoch(CN3D_model, CombCN_model, final_model, mask_loader,
+                                        train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
+
+        backward_loss = train_one_epoch(CN3D_model, CombCN_model, final_model, mask_loader,
+                                        train_dataloader_backward, val_dataloader_backward, BATCH_SIZE, FRAME_SIZE)    
+
+        total_loss = (forward_loss + backward_loss)/2
+        print(str(i+1) + " epochs train ==> total loss on this epoch : " + total_loss)
+
+        if i % SAVE_TERM_PER_EPOCH:
+            Weight_save(CN3D_model, MODEL_DIR + "CN3D.h5")
+            Weight_save(CombCN_model, MODEL_DIR + "CombCN.h5")
+            Weight_save(final_model, MODEL_DIR + "final.h5")
+            #FUTURE WORK
+            #Init_plot()
+            #sample_data = None
+            #sample_result= final_model.predict(sample_data)
+            #result_plot(sample_data, sample_result)
 
 if __name__ == "__main__":
     Init_dataloader()
