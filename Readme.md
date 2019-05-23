@@ -3,12 +3,14 @@
 
 # INIT 2019.05.13.
 
-deep learning model for Video Inpainting 
+# deep learning model for Video Inpainting 
 
 not finished, on coding now
 
 reference
+
 https://arxiv.org/pdf/1806.08482.pdf
+
 -mainly considered
 
 https://arxiv.org/pdf/1806.08482.pdf
