@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 import glob
 import numpy as np
@@ -15,6 +11,7 @@ from random import randint, seed
 import itertools
 import numpy as np
 import cv2
+from copy import deepcopy
 
 global default_dir
 global image_dir
@@ -168,15 +165,52 @@ def Data_split(x_data, train_test_ratio = 0.7):
         
     return np.array(x_train), np.array(x_test)
 
-def Train_dataloader(train_data):
-    
+def data_batch_loader_forward(data_batch):
     while True:
-        for scene in range(len(train_data)):
-            for longcut in train_data[scene]["path"]:
-                for cut in train_data[scene]["path"][longcut]:
-                    train_data[scene]["path"][longcut][cut].sort()
-                    for image_path in train_data[scene]["path"][longcut][cut]:
+        for scene in range(len(data_batch)):
+            for longcut in data_batch[scene]["path"]:
+                for cut in data_batch[scene]["path"][longcut]:
+                    data_batch[scene]["path"][longcut][cut].sort()
+                    #feed frames of video from forward
+                    for image_path in data_batch[scene]["path"][longcut][cut]:
+                        #to check working properly
+                        #print(image_path)
                         yield cv2.imread(image_path)
+
+def data_batch_loader_backward(data_batch):
+    while True:
+        for scene in range(len(data_batch)):
+            for longcut in data_batch[scene]["path"]:
+                for cut in data_batch[scene]["path"][longcut]:
+                    data_batch[scene]["path"][longcut][cut].sort()
+                    #feed frames of video from backward
+                    for image_path in reversed(data_batch[scene]["path"][longcut][cut]):
+                        #to check working properly
+                        #print(image_path)
+                        yield cv2.imread(image_path)
+
+def image_normalization(image_batch):
+    image_batch = image_batch - 127.5
+    image_batch = np.divide(image_batch, 127.5)
+    return image_batch
+
+def image_to_origin(image_batch):
+    image_batch = np.multiply(image_batch, 127.5)
+    image_batch = image_batch + 127.5
+    return image_batch
+
+def image_masking(image_batch, mask_batch):
+    if len(image_batch) != len(mask_batch):
+        return None
+    
+    masked_image_batch = []
+
+    for i in range(len(image_batch)):
+        masked_image = deepcopy(image_batch[i])
+        masked_image[ mask_batch[i] == 0 ] = 255
+        masked_image_batch.append(masked_image)
+
+    return np.array(masked_image_batch)
 
 class MaskGenerator():
 # MaskGenerator from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/util.py
@@ -302,7 +336,12 @@ def Video_loader(sampling_size = 30):
 if __name__ == "__main__":
     Init_dataloader()
     train_data = Img_loader()
-    dataloader = Train_dataloader(train_data)
+    dataloader = data_batch_loader_forward(train_data)
+    print(next(dataloader))
+    print(next(dataloader))
+    dataloader_back = data_batch_loader_backward(train_data)
+    print(next(dataloader_back))
+    print(next(dataloader_back))
     
 
     

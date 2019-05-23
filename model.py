@@ -17,7 +17,7 @@ from keras.layers.core import Lambda, Flatten, Dense
 import math
 from keras.layers import Conv2DTranspose, Conv3DTranspose, Reshape
 from keras.optimizers import adam, Adam
-from pconv_layer import PConv2D
+from pconv_layer_2D import PConv2D
 #NEED TO IMPORT PConv3D
 from DataWeight_load import *
 
