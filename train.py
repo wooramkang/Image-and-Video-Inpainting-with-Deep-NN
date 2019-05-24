@@ -29,7 +29,7 @@ def train_one_epoch(CN3D_model, CombCN_model, final_model,
     #print("CN3D")
     comb_loss = CombCN_model.train_on_batch ( [img_masked_batch, vid_masked_batch], img_train_batch )
     #print("COMB")
-    final_loss = final_model.train_on_batch ( [img_masked_batch, vid_masked_batch], [vid_train_batch, img_train_batch])
+    final_loss = final_model.train_on_batch ( [img_masked_batch, vid_masked_batch], [img_train_batch, vid_train_batch])
     #print("FINAL")
     epoch_loss = (cn3d_loss + comb_loss + final_loss) / 3
 

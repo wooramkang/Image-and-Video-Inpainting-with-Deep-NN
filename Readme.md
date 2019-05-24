@@ -29,3 +29,17 @@ https://arxiv.org/pdf/1810.08771.pdf
 https://arxiv.org/pdf/1803.02077.pdf
 
 https://arxiv.org/pdf/1803.04626.pdf
+
+https://arxiv.org/pdf/1903.04227.pdf
+
+https://arxiv.org/pdf/1611.09969.pdf
+
+https://github.com/adamstseng/general-deep-image-completion
+
+http://iizuka.cs.tsukuba.ac.jp/projects/completion/en/
+
+https://github.com/lyndonzheng/Pluralistic-Inpainting
+
+https://github.com/MingtaoGuo/DCGAN_WGAN_WGAN-GP_LSGAN_SNGAN_RSGAN_BEGAN_ACGAN_PGGAN_TensorFlow
+
+https://github.com/MathiasGruber/PConv-Keras
