@@ -37,11 +37,12 @@ def train_one_epoch(CN3D_model, CombCN_model, final_model,
 
 def train():
     BATCH_SIZE = 4
+    #SAMPLE_BATCH_SIZE = 6
     FRAME_SIZE = 8
-    # TRAIN EPOCH
     EPOCH = 40000
     SAVE_TERM_PER_EPOCH = 10
-    MODEL_DIR = "/home/rd/"
+    MODEL_DIR = "model_log/"
+    
     img_shape = None #(320, 240, 3)
     train_dataloader_forward = None 
     train_dataloader_backward = None
@@ -70,7 +71,7 @@ def train():
                                                             vid_net_mid_depth=3, frame_net_mid_depth=4)
     
     for i in range(EPOCH):
-
+        
         forward_loss = train_one_epoch(CN3D_model, CombCN_model, final_model, mask_loader, half_mask_loader,
                                         train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
 
@@ -86,7 +87,7 @@ def train():
             Weight_save(final_model, MODEL_DIR + "final.h5")
             #FUTURE WORK
             #Init_plot()
-            #sample_data = None
+            #sample_img_batch, sample_vid_batch = Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward)
             #sample_result= final_model.predict(sample_data)
             #result_plot(sample_data, sample_result)
 

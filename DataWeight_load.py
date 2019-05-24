@@ -174,6 +174,25 @@ def data_batch_loader_backward(data_batch):
                         #print(image_path)
                         yield Image_read(image_path), cut
 
+def Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward):
+    
+    sample_frames_batch = []
+    sample_img_batch = []
+
+    for i in range(SAMPLE_BATCH_SIZE):
+        rand_idx = randint(0, 1000000)
+        sample_frames = []
+
+        for step in range(rand_idx):
+            next(data_batch_loader_forward)
+        
+        for step in range(SAMPLE_BATCH_SIZE):
+            sample_frames.append( next(data_batch_loader_forward))
+
+        sample_img_batch.append(sample_frames[-1])
+        sample_frames_batch.append(sample_frames)
+
+    return np.array(sample_img_batch), np.array(sample_frames_batch)
 def iter_to_one_batch(iter, batch_size):
     data_batch = []
     temp = None
