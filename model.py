@@ -288,7 +288,7 @@ def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_de
     CombCN_model.summary()
     CombCN_model.compile(optimizer=optimizer_mainnet, loss={'activation_2' : 'mse'})
 
-    final_model = Model( inputs=[input_frame, input_video], outputs=[ CN3D_model(input_video), CombCN_model( [input_frame, input_video] ) ])
+    final_model = Model( inputs=[input_frame, input_video], outputs=[CombCN_model( [input_frame, input_video] ),  CN3D_model(input_video) ])
     final_model.summary()
     alpha = 1.0#0.7
     beta = 1.0

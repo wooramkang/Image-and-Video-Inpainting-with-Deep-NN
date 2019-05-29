@@ -193,6 +193,7 @@ def Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward):
         sample_frames_batch.append(sample_frames)
 
     return np.array(sample_img_batch), np.array(sample_frames_batch)
+    
 def iter_to_one_batch(iter, batch_size):
     data_batch = []
     temp = None
@@ -203,12 +204,14 @@ def iter_to_one_batch(iter, batch_size):
         bef_checker = __checker
         temp, __checker = next(iter)
         count = i + 1
+
         if (bef_checker != __checker) and ( i != 0 ):
             break
         data_batch.append( image_normalization(temp) )
 
-    for i in range(batch_size - count):
-        data_batch.append( data_batch[count] )
+    if batch_size != count:
+        for i in range(batch_size - (count-1)):
+            data_batch.append( data_batch[len(data_batch)-1] )
 
     return np.array(data_batch)
 
