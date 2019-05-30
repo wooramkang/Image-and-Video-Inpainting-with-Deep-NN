@@ -105,7 +105,7 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     d1_CC = Activ(d1_CC)
     #print(d1_CC.get_shape())
 
-    d1_CCC = Conv3D(strides=1, filters=32, kernel_size= 3, padding='same')(d1_CC)
+    d1_CCC = Conv3D(strides=1, filters=32, kernel_size= 4, padding='same')(d1_CC)
     d1_CCC = Bat(d1_CCC)
     d1_CCC = Activ(d1_CCC)
 
@@ -154,13 +154,19 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     #skip_subnet = CN3D(video_info=None , input_video = input_video, sampling_frame= 8,  vid_net_mid_depth = 3)
     skip_subnet = input_video
     size_subnet = skip_subnet.get_shape()
-
     # IS IT WHAT THE PAPER SAYS? NOT SURE
     skip_subnet = Reshape( (int(W/2), int(H/2), int(size_subnet[1]* size_subnet[4]) ) )(skip_subnet)
-    skip_subnet = Conv2D(filters= 64,  padding='same', kernel_size=5, strides = 1)(skip_subnet)
+
+    skip_subnet_C = Conv2D(filters= 32,  padding='same', kernel_size=5, strides = 1)(skip_subnet)
+    #skip_subnet = Bat(skip_subnet)
+    skip_subnet_C = Activ(skip_subnet_C)
+    skip_subnet_C = Concatenate()([skip_subnet_C, skip_subnet])
+    skip_subnet = skip_subnet_C
+
+    skip_subnet = Conv2D(filters= 64,  padding='same', kernel_size=3, strides = 1)(skip_subnet)
     skip_subnet = Bat(skip_subnet)
     skip_subnet = Activ(skip_subnet)
-    
+
     e0_C = Concatenate()([e0_C, skip_subnet])
     print(e0_C.get_shape())
 
@@ -185,17 +191,23 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     print(e2_C.get_shape())
 
     fc_mid = e2_C
+    fc_prev = e2_C
     p_num = 2
     
     for i in range(frame_net_mid_depth):
         fc_mid = Conv2D(filters= 512, dilation_rate= p_num, kernel_size = 3, padding='same')(fc_mid)
         fc_mid = Bat(fc_mid)
         fc_mid = Activ(fc_mid)
+        f_temp = fc_mid
+
+        fc_mid = Concatenate()([fc_mid, fc_prev])
+        fc_prev = f_temp
+
         print(fc_mid.get_shape())
         p_num = p_num * 2
 
     #fc_mid = Deconvolution3D(strides=2, filters=64, kernel_size= 4, padding='same')(fc_mid)
-    d0 = Concatenate()([fc_mid, e2_C])    
+    d0 = Concatenate()([fc_prev, e2_C])    
     d0 = Conv2D(strides=1, filters=512, kernel_size= 3, padding='same')(d0)
     d0 = Bat(d0)
     d0 = Activ(d0)
@@ -215,7 +227,6 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     d0_CC = Activ(d0_CC)
     
     print(d0_CC.get_shape())
-
     d1 = UpSampling2D()(d0_CC)
     d1 = Concatenate()([d1, e1])    
     d1 = Conv2D(strides=1, filters=256, kernel_size= 4, padding='same')(d1)
@@ -224,7 +235,7 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     
     print(d1.get_shape())
     d1_C = Concatenate()([d1, e0_C])
-    d1_C = Conv2D(filters= 128, padding='same', kernel_size=3)(d1)
+    d1_C = Conv2D(filters= 128, padding='same', kernel_size=3)(d1_C)
     d1_C = Bat(d1_C)
     d1_C = Activ(d1_C)
     print(d1_C.get_shape())
@@ -235,7 +246,13 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     d1_CC = Activ(d1_CC)
     print(d1_CC.get_shape())
 
-    d1_CCC = Conv2D(strides=1, filters=32, kernel_size= 3, padding='same')(d1_CC)
+    d1_CC = Conv2D(strides=1, filters=32, kernel_size= 5, padding='same')(d1_CC)
+    d1_CC = Bat(d1_CC)
+    d1_CC = Activ(d1_CC)
+    print(d1_CC.get_shape())
+
+    d1_CCC = Concatenate()([d1_CC, e0])
+    d1_CCC = Conv2D(strides=1, filters=32, kernel_size= 4, padding='same')(d1_CCC)
     d1_CCC = Bat(d1_CCC)
     d1_CCC = Activ(d1_CCC)
     print(d1_CCC.get_shape())
@@ -271,8 +288,8 @@ def l1(y_true, y_pred):
 
 def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
     Init_dataloader()
-    optimizer_subnet = Adam(lr=0.005)
-    optimizer_mainnet = Adam(lr=0.005)
+    optimizer_subnet = Adam(lr=0.01)
+    optimizer_mainnet = Adam(lr=0.01)
     #optimizer_final = Adam(lr=0.0001)
 
     input_frame = Input( shape=data_shape )

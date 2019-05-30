@@ -2,7 +2,6 @@ import os
 import glob
 import numpy as np
 from numpy import genfromtxt
-import cv2
 import PIL
 import keras
 from keras.models import Model
@@ -333,6 +332,12 @@ class MaskGenerator():
 
         # Set size scale
         size = int((self.width + self.height) * 0.03)
+
+        if int(size/2) < 2:
+            size = 2
+        else:
+            size = int(size/2)
+
         if self.width < 64 or self.height < 64:
             raise Exception("Width and Height of mask must be at least 64!")
         
@@ -340,13 +345,13 @@ class MaskGenerator():
         for _ in range(randint(1, 20)):
             x1, x2 = randint(1, self.width), randint(1, self.width)
             y1, y2 = randint(1, self.height), randint(1, self.height)
-            thickness = randint(2, size)
+            thickness = randint(0, size)
             cv2.line(img,(x1,y1),(x2,y2),(1,1,1),thickness)
             
         # Draw random circles
         for _ in range(randint(1, 20)):
             x1, y1 = randint(1, self.width), randint(1, self.height)
-            radius = randint(2, size)
+            radius = randint(0, size)
             cv2.circle(img,(x1,y1),radius,(1,1,1), -1)
             
         # Draw random ellipses
@@ -354,7 +359,7 @@ class MaskGenerator():
             x1, y1 = randint(1, self.width), randint(1, self.height)
             s1, s2 = randint(1, self.width), randint(1, self.height)
             a1, a2, a3 = randint(3, 180), randint(3, 180), randint(3, 180)
-            thickness = randint(2, size)
+            thickness = randint(0, size)
             cv2.ellipse(img, (x1,y1), (s1,s2), a1, a2, a3,(1,1,1), thickness)
         
         return 1-img

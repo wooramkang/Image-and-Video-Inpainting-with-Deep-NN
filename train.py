@@ -82,6 +82,7 @@ def test_one_epoch(mask_loader, half_mask_loader, train_dataloader, val_dataload
         half_mask_batch = mask_to_one_batch(half_mask_loader, frame_size)
         frame_masked_batch = image_masking(vid_train_batch[i], half_mask_batch)
         vid_masked_batch.append(frame_masked_batch)
+
     vid_masked_batch = np.array(vid_masked_batch)
 
     #IMAGE BATCH
@@ -96,8 +97,9 @@ def test_one_epoch(mask_loader, half_mask_loader, train_dataloader, val_dataload
 
     img_masked_batch = image_to_origin(img_masked_batch)
     comb_result = image_to_origin(comb_result)
+    img_train_batch = image_to_origin(img_train_batch)
 
-    return img_masked_batch, comb_result
+    return img_masked_batch, comb_result, img_train_batch
 
 
 def train():
@@ -158,30 +160,42 @@ def train():
         print("No saved model")
 
     for i in range(EPOCH):
-
+        train_log.write(str(i+1) + " ")
         if i % SAVE_TERM_PER_EPOCH == 0:
-            masked_in, result = test_one_epoch(mask_loader, half_mask_loader,
-                                        train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
+            masked_in, result, raw_img = test_one_epoch(mask_loader, half_mask_loader,
+                                            train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
 
             fig = plt.figure()
-            rows = 2
-            cols = BATCH_SIZE
+
+            rows = BATCH_SIZE
+            cols = 3
             c = 0
             
-            for j in range(cols):
+            for j in range(BATCH_SIZE):
                 c = c+1
                 ax = fig.add_subplot(rows, cols, c)
-                ax.imshow(cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) )
-                ax.set_xlabel(str(j))
+                mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
+                ax.imshow(mask_ax)
+                cv2.imwrite(TRAIN_LOG_DIR + "mask_" + str(i) + "_" + str(j) + ".jpg", mask_ax)
+                #ax.set_xlabel(str(j))
 
                 c = c+1
                 ax2 = fig.add_subplot(rows, cols, c)
-                ax2.imshow(cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB) )
-                ax2.set_xlabel(str(j))
+                result_ax = cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB)
+                cv2.imwrite(TRAIN_LOG_DIR + "result_" + str(i) + "_" + str(j) + ".jpg", result_ax)
+                ax2.imshow(result_ax )
+                #ax2.set_xlabel(str(j))
+
+                c = c+1
+                ax3 = fig.add_subplot(rows, cols, c)
+                raw_img_ax = cv2.cvtColor(np.uint8(raw_img[j, :]), cv2.COLOR_BGR2RGB)
+                cv2.imwrite(TRAIN_LOG_DIR + "raw_" + str(i) + "_" + str(j) + ".jpg", raw_img_ax)
+                ax3.imshow(raw_img_ax)
+                #ax3.set_xlabel(str(j))
 
             #to check the training result
             plt.show()
-            plt.savefig(TRAIN_LOG_DIR + "plt" + str(i) + ".png")
+
             Weight_save(CN3D_model, MODEL_DIR + "CN3D.h5")
             Weight_save(CombCN_model, MODEL_DIR + "CombCN.h5")
             #Weight_save(final_model, MODEL_DIR + "final.h5")
