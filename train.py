@@ -2,8 +2,7 @@ from model import *
 from DataWeight_load import *
 from result_plot import *
 
-def train_one_epoch(#CN3D_model, CombCN_model, final_model,
-                    mask_loader, half_mask_loader, train_dataloader, val_dataloader, batch_size, frame_size):
+def train_one_epoch(mask_loader, half_mask_loader, train_CN3D, train_dataloader, val_dataloader, batch_size, frame_size):
     
     vid_train_batch = [ iter_to_one_batch(train_dataloader, frame_size) for i in range(batch_size) ]
     img_train_batch = np.array([ frame_per_batch[len(frame_per_batch)-1] for frame_per_batch in vid_train_batch])
@@ -25,18 +24,30 @@ def train_one_epoch(#CN3D_model, CombCN_model, final_model,
     #IMAGE BATCH
     mask_batch = mask_to_one_batch(mask_loader, batch_size)
     img_masked_batch = image_masking(img_train_batch, mask_batch)
-    cn3d_loss = CN3D_model.train_on_batch(vid_masked_batch, vid_train_batch)
-    print("CN3D_model_loss")
-    print(cn3d_loss)
+
+    cn3d_loss = 0
+    comb_loss = 0
+    final_loss = 0
+    
+    if train_CN3D:
+        cn3d_loss = CN3D_model.train_on_batch(vid_masked_batch, vid_train_batch)
+        print("CN3D_model_loss")
+        print(cn3d_loss)
+    
     comb_loss = CombCN_model.train_on_batch ( [img_masked_batch, vid_masked_batch], img_train_batch )
     print("COMB_model_loss")
     print(comb_loss)
-    final_loss = final_model.train_on_batch ( [img_masked_batch, vid_masked_batch], [img_train_batch, vid_train_batch])
-    print("FINAL_model_loss")
-    final_loss = sum(final_loss)/3
-    print(final_loss)
 
-    epoch_loss = (cn3d_loss + comb_loss + final_loss) / 3
+    if train_CN3D:
+        final_loss = final_model.train_on_batch ( [img_masked_batch, vid_masked_batch], [img_train_batch, vid_train_batch])
+        print("FINAL_model_loss")
+        final_loss = sum(final_loss)/3
+        print(final_loss)
+
+    if cn3d_loss != 0:
+        epoch_loss = (cn3d_loss + comb_loss + final_loss) / 3
+    else:
+        epoch_loss = comb_loss
 
     return epoch_loss
 
@@ -79,16 +90,22 @@ def train():
                                                             vid_net_mid_depth=3, frame_net_mid_depth=4)
     
     for i in range(EPOCH):
+        if i % 2 == 0:
+            set_train_CN3D = True
+            set_train_CN3D_backward = False
+        else:
+            set_train_CN3D = False
+            set_train_CN3D_backward = True
+
         print("train forward")
-        forward_loss = train_one_epoch(mask_loader, half_mask_loader,
+        forward_loss = train_one_epoch(mask_loader, half_mask_loader,set_train_CN3D,
                                         train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
         print(str(i+1) + " epochs train  forward done ==> total loss on this epoch : " + str(forward_loss))
 
         print("train backward")
-        backward_loss = train_one_epoch(mask_loader, half_mask_loader,
+        backward_loss = train_one_epoch(mask_loader, half_mask_loader,set_train_CN3D_backward,
                                         train_dataloader_backward, val_dataloader_backward, BATCH_SIZE, FRAME_SIZE)    
-        print(str(i+1) + " epochs train  backward done ==> total loss on this epoch : " + str(backward_loss))
-
+        print(str(i+1) + " epochs train  backward done ==> total loss on this epoch : " + str(backward_loss))        
         if i % SAVE_TERM_PER_EPOCH:
             Weight_save(CN3D_model, MODEL_DIR + "CN3D.h5")
             Weight_save(CombCN_model, MODEL_DIR + "CombCN.h5")

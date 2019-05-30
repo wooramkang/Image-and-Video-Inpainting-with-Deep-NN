@@ -67,3 +67,25 @@ https://medium.com/@pix2pix.datascience/investigating-the-impact-of-preprocessin
 https://medium.com/@jctestud/video-generation-with-pix2pix-aed5b1b69f57
 
 https://medium.com/@Synced/nvidia-mit-csail-open-source-video-to-video-synthesis-method-6c876ced2957
+
+https://arxiv.org/pdf/1812.09079.pdf
+
+https://github.com/flyywh/Video-Super-Resolution
+
+https://arxiv.org/pdf/1711.06106.pdf
+
+https://arxiv.org/pdf/1806.08482.pdf
+
+https://www.profillic.com/paper/arxiv:1901.03419
+
+https://www.semanticscholar.org/paper/H-DenseUNet%3A-Hybrid-Densely-Connected-UNet-for-and-Li-Chen/a86d7289c76d832e83c99539859b7b186e4ea6c8
+
+https://arxiv.org/abs/1705.00053
+
+https://www.offconvex.org/2018/03/12/bigan/
+
+https://github.com/SKTBrain/DiscoGAN/blob/master/discogan/model.py
+
+https://arxiv.org/pdf/1609.04802.pdf
+
+https://wwwpub.zih.tu-dresden.de/~ds24/lehre/ml_ws_2013/ml_11_hinge.pdf
