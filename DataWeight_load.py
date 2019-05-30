@@ -35,7 +35,7 @@ def Init_dataloader():
     global video_dir
     global shape
 
-    default_dir = "../../recognition_research/3D_model/DATASET/UCF-101/"
+    default_dir = "/TEST_MODEL/UCF-101-image/"
     Set_video_dir(default_dir)
     Set_image_dir(default_dir)
     shape = None
@@ -123,7 +123,27 @@ def Img_loader():
     print(len(x_data[1]["path"]))
     print(len(x_data[1]["path"][1] ))
     print(len(x_data[1]["path"][1][1] ))
-    print(x_data[1]["path"][1][2][0] )
+    print(x_data[1]["path"][1][2][1] )
+    '''
+        2019. 05 .16 video to images & only image stream loader // wooramkang
+        dataset UCF-101 - >x_data  hash structure tree i made
+
+        x_data[1]          ["path"][1]  [2]  [3]
+              [start from 0]
+        x_data[scene_order]
+              [random name order of scene]
+        x_data[scene_order]["name"]
+        x_data[scene_order]["path"]
+                                   [1]
+                                   [g01 = longcut01]
+                                   [start from 1]
+                                        [1]
+                                        [c01 = cut01]
+                                        [start from 1]
+                                             [0] = "/ho...."
+                                             [random order of image]
+                                             [start from 0]
+    '''
     img = Image_read(x_data[1]["path"][1][2][0])
     Set_shape( img.shape )
 
@@ -180,7 +200,7 @@ def Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward):
     sample_img_batch = []
 
     for i in range(SAMPLE_BATCH_SIZE):
-        rand_idx = randint(0, 1000000)
+        rand_idx = randint(0, 100)
         sample_frames = []
 
         for step in range(rand_idx):
@@ -193,7 +213,6 @@ def Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward):
         sample_frames_batch.append(sample_frames)
 
     return np.array(sample_img_batch), np.array(sample_frames_batch)
-    
 
 def iter_to_one_batch(iter, batch_size):
     data_batch = []
@@ -214,6 +233,7 @@ def iter_to_one_batch(iter, batch_size):
             return np.array(data_batch)            
 
         data_batch.append( image_normalization(temp) )
+
     return np.array(data_batch)
 
 def mask_to_one_batch(mask_loader, batch_size):
@@ -234,6 +254,7 @@ def Image_read(file_path):
     #img = np.transpose(img, (2, 0, 1))
     '''
     img = np.transpose(img, (1, 0, 2))
+    #print(img.shape)
     return img
 
 def Get_image_shape():
@@ -248,6 +269,7 @@ def image_normalization(image_batch):
 def image_to_origin(image_batch):
     image_batch = np.multiply(image_batch, 127.5)
     image_batch = image_batch + 127.5
+    #image_batch = np.transpose(image_batch, (0, 3, 1, 2))
     return image_batch
 
 def image_to_half_size(image_batch):
@@ -318,13 +340,13 @@ class MaskGenerator():
         for _ in range(randint(1, 20)):
             x1, x2 = randint(1, self.width), randint(1, self.width)
             y1, y2 = randint(1, self.height), randint(1, self.height)
-            thickness = randint(3, size)
+            thickness = randint(2, size)
             cv2.line(img,(x1,y1),(x2,y2),(1,1,1),thickness)
             
         # Draw random circles
         for _ in range(randint(1, 20)):
             x1, y1 = randint(1, self.width), randint(1, self.height)
-            radius = randint(3, size)
+            radius = randint(2, size)
             cv2.circle(img,(x1,y1),radius,(1,1,1), -1)
             
         # Draw random ellipses
@@ -332,7 +354,7 @@ class MaskGenerator():
             x1, y1 = randint(1, self.width), randint(1, self.height)
             s1, s2 = randint(1, self.width), randint(1, self.height)
             a1, a2, a3 = randint(3, 180), randint(3, 180), randint(3, 180)
-            thickness = randint(3, size)
+            thickness = randint(2, size)
             cv2.ellipse(img, (x1,y1), (s1,s2), a1, a2, a3,(1,1,1), thickness)
         
         return 1-img

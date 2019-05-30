@@ -43,7 +43,7 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     
     #print(input_video.get_shape())
     e0 = Conv3D(filters=32,padding='same', kernel_size=(5,5,5))(input_video)
-    e0 = Bat(e0)
+    #e0 = Bat(e0)
     e0 = Activ(e0)
     #print(e0.get_shape())
     #WITH NO CONCATENATE Init_dataloader()DING IN 3DCN BUT WITH CONCAT FOR ENCODING IN combination part
@@ -105,8 +105,12 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     d1_CC = Activ(d1_CC)
     #print(d1_CC.get_shape())
 
-    d2_CC = Conv3D(filters=3, padding='same', kernel_size= 5)(d1_CC)
-    d2_CC = Bat(d2_CC)
+    d1_CCC = Conv3D(strides=1, filters=32, kernel_size= 3, padding='same')(d1_CC)
+    d1_CCC = Bat(d1_CCC)
+    d1_CCC = Activ(d1_CCC)
+
+    d2_CC = Conv3D(filters=3, padding='same', kernel_size= 3)(d1_CCC)
+    #d2_CC = Bat(d2_CC)
     d2_CC = Activation('tanh')(d2_CC)
     #print(d2_CC.get_shape())
     video_3DCN = d2_CC
@@ -136,13 +140,13 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
 
     print(input_frame.get_shape())
 
-    e0 = Conv2D(filters=32,padding='same', kernel_size=(5,5))(input_frame)
-    e0 = Bat(e0)
+    e0 = Conv2D(filters=32,padding='same', kernel_size=5)(input_frame)
+    #e0 = Bat(e0)
     e0 = Activ(e0)
     print(e0.get_shape())
     #WITH NO CONCATENATE Init_dataloader()DING IN 3DCN BUT WITH CONCAT FOR ENCODING IN combination part
 
-    e0_C = Conv2D(filters= 64,  padding='same', kernel_size=(4,4), strides = 2)(e0)
+    e0_C = Conv2D(filters= 64,  padding='same', kernel_size=3, strides = 2)(e0)
     e0_C = Bat(e0_C)
     e0_C = Activ(e0_C)
     print(e0_C.get_shape())
@@ -153,14 +157,14 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
 
     # IS IT WHAT THE PAPER SAYS? NOT SURE
     skip_subnet = Reshape( (int(W/2), int(H/2), int(size_subnet[1]* size_subnet[4]) ) )(skip_subnet)
-    skip_subnet = Conv2D(filters= 64,  padding='same', kernel_size=(4,4), strides = 1)(skip_subnet)
+    skip_subnet = Conv2D(filters= 64,  padding='same', kernel_size=5, strides = 1)(skip_subnet)
     skip_subnet = Bat(skip_subnet)
     skip_subnet = Activ(skip_subnet)
     
     e0_C = Concatenate()([e0_C, skip_subnet])
     print(e0_C.get_shape())
 
-    e1 = Conv2D(filters=256, padding='same', kernel_size=(3,3))(e0_C)
+    e1 = Conv2D(filters=256, padding='same', kernel_size=3)(e0_C)
     e1 = Bat(e1)
     e1 = Activ(e1)
     print(e1.get_shape())
@@ -170,7 +174,7 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     e1_C = Activ(e1_C)
     print(e1_C.get_shape())
 
-    e2 = Conv2D(filters=512,padding='same', kernel_size=(3,3))(e1_C)
+    e2 = Conv2D(filters=512,padding='same', kernel_size=3)(e1_C)
     e2 = Bat(e2)
     e2 = Activ(e2)
     print(e2.get_shape())
@@ -231,8 +235,13 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     d1_CC = Activ(d1_CC)
     print(d1_CC.get_shape())
 
-    d_out = Conv2D(filters=3, padding='same', kernel_size = 5)(d1_CC)
-    d_out = Bat(d_out)
+    d1_CCC = Conv2D(strides=1, filters=32, kernel_size= 3, padding='same')(d1_CC)
+    d1_CCC = Bat(d1_CCC)
+    d1_CCC = Activ(d1_CCC)
+    print(d1_CCC.get_shape())
+
+    d_out = Conv2D(filters=3, padding='same', kernel_size = 3)(d1_CCC)
+    #d_out = Bat(d_out)
     d_out = Activation('tanh')(d_out)
     print(d_out.get_shape())
 
@@ -264,7 +273,7 @@ def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_de
     Init_dataloader()
     optimizer_subnet = Adam(lr=0.005)
     optimizer_mainnet = Adam(lr=0.005)
-    optimizer_final = Adam(lr=0.0001)
+    #optimizer_final = Adam(lr=0.0001)
 
     input_frame = Input( shape=data_shape )
     input_video = Input( shape=(sampling_frame, int(data_shape[0]/2), int(data_shape[1]/2), 3) )
@@ -279,15 +288,15 @@ def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_de
         
         CN3D_model.add_loss(loss_3DCN())
     '''
-    CN3D_model.compile(optimizer=optimizer_subnet, loss={'activation_1' : 'mse'} )
+    CN3D_model.compile(optimizer=optimizer_subnet, loss={'activation_1' : 'mae'} )
 
     combCN= CombCN(input_frame= input_frame, input_video = CN3D_model(input_video) )
     CombCN_model = Model([input_frame, input_video], combCN)
     CombCN_model.summary()
-    CombCN_model.compile(optimizer=optimizer_mainnet, loss={'activation_2' : 'mse'})
+    CombCN_model.compile(optimizer=optimizer_mainnet, loss={'activation_2' : 'mae'})
 
-    final_model = Model( inputs=[input_frame, input_video], outputs=[CombCN_model( [input_frame, input_video] ),  CN3D_model(input_video) ])
-    final_model.summary()
+    #final_model = Model( inputs=[input_frame, input_video], outputs=[CombCN_model( [input_frame, input_video] ),  CN3D_model(input_video) ])
+    #final_model.summary()
     alpha = 1.0#0.7
     beta = 1.0
     
@@ -300,14 +309,9 @@ def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_de
         return t_loss
     final_model.add_loss(loss_total())
     '''
-    final_model.compile(optimizer=optimizer_final, loss={'model_1' : 'mse', 'model_2' : 'mse'},
-                                                    loss_weights={'model_1' :alpha , 'model_2':beta} )
-    return CN3D_model, CombCN_model, final_model
-#ref of LATEX for diagrams
-#https://www.overleaf.com/learn/latex/Code_listing
-#https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
-#ref of plotting NN with LATEX
-#https://github.com/HarisIqbal88/PlotNeuralNet
+    #final_model.compile(optimizer=optimizer_final, loss={'model_1' : 'mae', 'model_2' : 'mae'},
+    #                                                loss_weights={'model_1' :alpha , 'model_2':beta} )
+    return CN3D_model, CombCN_model#, final_model
 
 ## to check shapes of models to train
 if __name__ == "__main__":
