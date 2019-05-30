@@ -231,7 +231,7 @@ def train():
         print(str(i+1) + " epochs train  backward done ==> total loss on this epoch : " + str(backward_loss))        
         train_log.write(" " + str(backward_loss) + "\n")
     
-
+#ONLY FOR RE-COMMIT 
 if __name__ == "__main__":
     Init_dataloader()
     train()
