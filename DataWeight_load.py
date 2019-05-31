@@ -127,6 +127,7 @@ def Img_loader():
     print(len(x_data[1]["path"][1] ))
     print(len(x_data[1]["path"][1][1] ))
     print(x_data[1]["path"][1][2][1] )
+    
     '''
         2019. 05 .16 video to images & only image stream loader // wooramkang
         dataset UCF-101 - >x_data  hash structure tree i made
@@ -147,6 +148,7 @@ def Img_loader():
                                              [random order of image]
                                              [start from 0]
     '''
+    
     img = Image_read(x_data[1]["path"][1][2][0])
     Set_shape( img.shape )
 
@@ -236,15 +238,13 @@ def iter_to_one_batch(iter, batch_size):
     for i in range(batch_size):
         bef_checker = __checker
         temp, __checker = next(iter)
-        count = i + 1
-
+        
         if (bef_checker != __checker) and ( i != 0 ):
-
-            for i in range(batch_size - (count-1)):
+            for i in range(batch_size - (count)):
                 data_batch.append( data_batch[len(data_batch)-1] )
-
             return np.array(data_batch)            
 
+        count = i + 1
         data_batch.append( image_normalization(temp) )
 
     return np.array(data_batch)

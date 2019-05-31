@@ -52,7 +52,6 @@ def test():
         train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
         train_dataloader_forward = data_batch_loader_forward(train_data)
         pdCN_model = pdCN_network_generate(data_shape= img_shape, sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE)    
-
     else:
         mask_loader = MaskGenerator(512, 512)#._generate_mask()
         train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)

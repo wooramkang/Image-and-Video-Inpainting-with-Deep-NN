@@ -164,7 +164,8 @@ def train():
         train_log.write(str(i+1) + " ")
         try:
             if i % SAVE_TERM_PER_EPOCH == 0:
-           
+                train_log.close()
+                train_log = open( TRAIN_LOG_DIR + "train_log.log", "a")
                 masked_in, result, raw_img = test_one_epoch(mask_loader, half_mask_loader,
                                                 train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
                 fig = plt.figure()

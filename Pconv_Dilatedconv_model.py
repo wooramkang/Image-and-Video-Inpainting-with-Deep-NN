@@ -159,7 +159,15 @@ def pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net
     pdCN_model.summary()
     pdCN_model.compile(optimizer=optimizer_pdCN, loss={'final_output' : 'mae'})
     
+    '''
+    def loss_func(image, mask):
+
+        return loss
+
+    pdCN_model.compile(optimizer=optimizer_pdCN, loss=loss_func(input_frame, input_mask) )
+        '''
     return pdCN_model
+
 
 if __name__ == "__main__":
     pdCN_network_generate()
