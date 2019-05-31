@@ -161,77 +161,83 @@ def train():
 
     for i in range(EPOCH):
         train_log.write(str(i+1) + " ")
-        if i % SAVE_TERM_PER_EPOCH == 0:
-            masked_in, result, raw_img = test_one_epoch(mask_loader, half_mask_loader,
+        try:
+            if i % SAVE_TERM_PER_EPOCH == 0:
+           
+                masked_in, result, raw_img = test_one_epoch(mask_loader, half_mask_loader,
+                                                train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
+
+                fig = plt.figure()
+
+                rows = BATCH_SIZE
+                cols = 3
+                c = 0
+                
+                for j in range(BATCH_SIZE):
+                    c = c+1
+                    ax = fig.add_subplot(rows, cols, c)
+                    mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
+                    ax.imshow(mask_ax)
+                    cv2.imwrite(TRAIN_LOG_DIR + "mask_" + str(i) + "_" + str(j) + ".jpg", mask_ax)
+                    #ax.set_xlabel(str(j))
+
+                    c = c+1
+                    ax2 = fig.add_subplot(rows, cols, c)
+                    result_ax = cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB)
+                    cv2.imwrite(TRAIN_LOG_DIR + "result_" + str(i) + "_" + str(j) + ".jpg", result_ax)
+                    ax2.imshow(result_ax )
+                    #ax2.set_xlabel(str(j))
+
+                    c = c+1
+                    ax3 = fig.add_subplot(rows, cols, c)
+                    raw_img_ax = cv2.cvtColor(np.uint8(raw_img[j, :]), cv2.COLOR_BGR2RGB)
+                    cv2.imwrite(TRAIN_LOG_DIR + "raw_" + str(i) + "_" + str(j) + ".jpg", raw_img_ax)
+                    ax3.imshow(raw_img_ax)
+                    #ax3.set_xlabel(str(j))
+
+                #to check the training result
+                plt.show()
+
+                Weight_save(CN3D_model, MODEL_DIR + "CN3D.h5")
+                Weight_save(CombCN_model, MODEL_DIR + "CombCN.h5")
+                #Weight_save(final_model, MODEL_DIR + "final.h5")
+                #FUTURE WORK
+                #Init_plot()
+                #sample_img_batch, sample_vid_batch = Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward)
+                #sample_result= final_model.predict(sample_data)
+                #result_plot(sample_data, sample_result)
+
+            if i % 3 == 0:
+                #set_train_CN3D = True
+                #set_train_CN3D_backward = False
+                set_train_CN3D = True
+                set_train_CN3D_backward = True
+            elif i % 3 == 1:
+                #set_train_CN3D = False
+                #set_train_CN3D_backward = True
+                set_train_CN3D = True
+                set_train_CN3D_backward = True
+            else:
+                set_train_CN3D = True
+                set_train_CN3D_backward = True
+
+            print("train forward")
+            forward_loss = train_one_epoch(mask_loader, half_mask_loader,set_train_CN3D,
                                             train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
+            print(str(i+1) + " epochs train  forward done ==> total loss on this epoch : " + str(forward_loss))
+            train_log.write(" " + str(forward_loss))
 
-            fig = plt.figure()
+            print("train backward")
+            backward_loss = train_one_epoch(mask_loader, half_mask_loader,set_train_CN3D_backward,
+                                            train_dataloader_backward, val_dataloader_backward, BATCH_SIZE, FRAME_SIZE)    
+            print(str(i+1) + " epochs train  backward done ==> total loss on this epoch : " + str(backward_loss))        
+            train_log.write(" " + str(backward_loss) + "\n")
+                
+        except:
+            continue
 
-            rows = BATCH_SIZE
-            cols = 3
-            c = 0
-            
-            for j in range(BATCH_SIZE):
-                c = c+1
-                ax = fig.add_subplot(rows, cols, c)
-                mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
-                ax.imshow(mask_ax)
-                cv2.imwrite(TRAIN_LOG_DIR + "mask_" + str(i) + "_" + str(j) + ".jpg", mask_ax)
-                #ax.set_xlabel(str(j))
 
-                c = c+1
-                ax2 = fig.add_subplot(rows, cols, c)
-                result_ax = cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB)
-                cv2.imwrite(TRAIN_LOG_DIR + "result_" + str(i) + "_" + str(j) + ".jpg", result_ax)
-                ax2.imshow(result_ax )
-                #ax2.set_xlabel(str(j))
-
-                c = c+1
-                ax3 = fig.add_subplot(rows, cols, c)
-                raw_img_ax = cv2.cvtColor(np.uint8(raw_img[j, :]), cv2.COLOR_BGR2RGB)
-                cv2.imwrite(TRAIN_LOG_DIR + "raw_" + str(i) + "_" + str(j) + ".jpg", raw_img_ax)
-                ax3.imshow(raw_img_ax)
-                #ax3.set_xlabel(str(j))
-
-            #to check the training result
-            plt.show()
-
-            Weight_save(CN3D_model, MODEL_DIR + "CN3D.h5")
-            Weight_save(CombCN_model, MODEL_DIR + "CombCN.h5")
-            #Weight_save(final_model, MODEL_DIR + "final.h5")
-            #FUTURE WORK
-            #Init_plot()
-            #sample_img_batch, sample_vid_batch = Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward)
-            #sample_result= final_model.predict(sample_data)
-            #result_plot(sample_data, sample_result)
-
-        if i % 3 == 0:
-            #set_train_CN3D = True
-            #set_train_CN3D_backward = False
-            set_train_CN3D = True
-            set_train_CN3D_backward = True
-        elif i % 3 == 1:
-            #set_train_CN3D = False
-            #set_train_CN3D_backward = True
-            set_train_CN3D = True
-            set_train_CN3D_backward = True
-        else:
-            set_train_CN3D = True
-            set_train_CN3D_backward = True
-
-        print("train forward")
-        forward_loss = train_one_epoch(mask_loader, half_mask_loader,set_train_CN3D,
-                                        train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
-        print(str(i+1) + " epochs train  forward done ==> total loss on this epoch : " + str(forward_loss))
-        train_log.write(" " + str(forward_loss))
-
-        print("train backward")
-        backward_loss = train_one_epoch(mask_loader, half_mask_loader,set_train_CN3D_backward,
-                                        train_dataloader_backward, val_dataloader_backward, BATCH_SIZE, FRAME_SIZE)    
-        print(str(i+1) + " epochs train  backward done ==> total loss on this epoch : " + str(backward_loss))        
-        train_log.write(" " + str(backward_loss) + "\n")
     
-#ONLY FOR RE-COMMIT 
 if __name__ == "__main__":
     Init_dataloader()
     train()

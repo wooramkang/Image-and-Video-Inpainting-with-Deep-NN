@@ -105,11 +105,11 @@ def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     d1_CC = Activ(d1_CC)
     #print(d1_CC.get_shape())
 
-    d1_CCC = Conv3D(strides=1, filters=32, kernel_size= 4, padding='same')(d1_CC)
+    d1_CCC = Conv3D(strides=1, filters=32, kernel_size= 4, padding='same', name='before_painting')(d1_CC)
     d1_CCC = Bat(d1_CCC)
     d1_CCC = Activ(d1_CCC)
 
-    d2_CC = Conv3D(filters=3, padding='same', kernel_size= 3)(d1_CCC)
+    d2_CC = Conv3D(filters=3, padding='same', kernel_size= 3, name ='painting')(d1_CCC)
     #d2_CC = Bat(d2_CC)
     d2_CC = Activation('tanh')(d2_CC)
     #print(d2_CC.get_shape())
@@ -157,13 +157,11 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     # IS IT WHAT THE PAPER SAYS? NOT SURE
     skip_subnet = Reshape( (int(W/2), int(H/2), int(size_subnet[1]* size_subnet[4]) ) )(skip_subnet)
 
-    skip_subnet_C = Conv2D(filters= 32,  padding='same', kernel_size=5, strides = 1)(skip_subnet)
-    #skip_subnet = Bat(skip_subnet)
-    skip_subnet_C = Activ(skip_subnet_C)
-    skip_subnet_C = Concatenate()([skip_subnet_C, skip_subnet])
-    skip_subnet = skip_subnet_C
+    skip_subnet = Conv2D(filters= 128,  padding='same', kernel_size=5, strides = 1,name='subnet')(skip_subnet)
+    skip_subnet = Bat(skip_subnet)
+    skip_subnet = Activ(skip_subnet)
 
-    skip_subnet = Conv2D(filters= 64,  padding='same', kernel_size=3, strides = 1)(skip_subnet)
+    skip_subnet = Conv2D(filters= 64,  padding='same', kernel_size=3, strides = 1,name='subnet_2')(skip_subnet)
     skip_subnet = Bat(skip_subnet)
     skip_subnet = Activ(skip_subnet)
 
@@ -246,13 +244,8 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     d1_CC = Activ(d1_CC)
     print(d1_CC.get_shape())
 
-    d1_CC = Conv2D(strides=1, filters=32, kernel_size= 5, padding='same')(d1_CC)
-    d1_CC = Bat(d1_CC)
-    d1_CC = Activ(d1_CC)
-    print(d1_CC.get_shape())
-
     d1_CCC = Concatenate()([d1_CC, e0])
-    d1_CCC = Conv2D(strides=1, filters=32, kernel_size= 4, padding='same')(d1_CCC)
+    d1_CCC = Conv2D(strides=1, filters=48, kernel_size= 4, padding='same')(d1_CCC)
     d1_CCC = Bat(d1_CCC)
     d1_CCC = Activ(d1_CCC)
     print(d1_CCC.get_shape())
@@ -288,8 +281,10 @@ def l1(y_true, y_pred):
 
 def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
     Init_dataloader()
-    optimizer_subnet = Adam(lr=0.01)
-    optimizer_mainnet = Adam(lr=0.01)
+
+    optimizer_3dnet = Adam(lr=0.01)
+    #optimizer_subnet = Adam(lr=0.01)
+    optimizer_combnet = Adam(lr=0.01)
     #optimizer_final = Adam(lr=0.0001)
 
     input_frame = Input( shape=data_shape )
@@ -298,24 +293,22 @@ def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_de
     cn3d = CN3D(input_video=input_video)
     CN3D_model = Model(input_video, cn3d)
     CN3D_model.summary()
-    '''
-    def loss_3DCN():
-        cn3d_loss = mse( CN3D_model(input_video), input_video )
-        return cn3d_loss
-        
-        CN3D_model.add_loss(loss_3DCN())
-    '''
-    CN3D_model.compile(optimizer=optimizer_subnet, loss={'activation_1' : 'mae'} )
+    CN3D_model.compile(optimizer=optimizer_3dnet, loss={'activation_1' : 'mae'} )
+    
+    subnet = Activation('tanh', name='activation_subnet')(CN3D_model.get_layer("before_painting").output)
+    subnet = Model(input_video, subnet)
+    #subnet.compile(optimizer=optimizer_subnet, loss={'activation_2' : 'mae'} )
+    #subnet.summary()
 
-    combCN= CombCN(input_frame= input_frame, input_video = CN3D_model(input_video) )
+    combCN= CombCN(input_frame= input_frame, input_video = subnet(input_video) )
     CombCN_model = Model([input_frame, input_video], combCN)
     CombCN_model.summary()
-    CombCN_model.compile(optimizer=optimizer_mainnet, loss={'activation_2' : 'mae'})
+    CombCN_model.compile(optimizer=optimizer_combnet, loss={'activation_2' : 'mae'})
 
     #final_model = Model( inputs=[input_frame, input_video], outputs=[CombCN_model( [input_frame, input_video] ),  CN3D_model(input_video) ])
     #final_model.summary()
-    alpha = 1.0#0.7
-    beta = 1.0
+    #alpha = 1.0#0.7
+    #beta = 1.0
     
     '''
     def loss_total():
