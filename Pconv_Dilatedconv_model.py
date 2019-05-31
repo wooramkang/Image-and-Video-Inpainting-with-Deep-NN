@@ -26,9 +26,10 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)
     Activ_re = lambda x: Activation('relu')(x)
+    
     if not frame_size:
-        W = 360
-        H = 240
+        W = 512
+        H = 512
 
     if input_frame is None:
         input_frame = Input( shape=(W, H, 3) )
@@ -49,7 +50,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
 
     encoder_layer.counter = 0
 
-    #PD_ENCODE
+    #PConv_ENCODE
     e_conv1, e_mask1 = encoder_layer(inputs_img, inputs_mask, 64, 7, bn=False)
     e_conv2, e_mask2 = encoder_layer(e_conv1, e_mask1, 128, 5)
     e_conv3, e_mask3 = encoder_layer(e_conv2, e_mask2, 256, 5)
@@ -127,7 +128,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
         print(conv.get_shape())
         return conv, mask
 
-    #PD_DECODE
+    #PConv_DECODE
     d_conv_mid, d_mask_mid = decoder_layer(fc_mid, fc_mid_mask, e_conv8, e_mask8, 512, 3)
     d_conv9, d_mask9 = decoder_layer(d_conv_mid, d_mask_mid, e_conv7, e_mask7, 512, 3)
     d_conv10, d_mask10 = decoder_layer(d_conv9, d_mask9, e_conv6, e_mask6, 512, 3)

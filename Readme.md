@@ -12,17 +12,26 @@
 
     * run train.py
 
-    <pre><code>
     python3 train.py
-    </code></pre>
 
 ## to train image inpainting (frame by frame)
 
     * run train_image_pdCN.py
 
-    <pre><code>
     python3 train_image_pdCN.py
-    </code></pre>
+
+## to test video inpainting (frames of video)
+
+    * run test.py
+
+    python3 test.py
+
+## to test image inpainting (frame by frame)
+
+    * run test_pdCN.py
+
+    python3 test_pdCN.py
+
 
 ## Model Architecture
 
@@ -30,7 +39,7 @@
 
     * 3D UNet
     * 2D Unet
-    * Combination NN
+    * Combination NN with Temporal 3D NN & Spatial 2D NN
     * etc...
 
 ### Image Inpainting

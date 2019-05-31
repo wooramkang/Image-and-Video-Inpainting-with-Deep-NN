@@ -28,13 +28,17 @@ def Set_shape(size):
     global shape
     shape = size
     
-def Init_dataloader():
+def Init_dataloader(data_dir=None):
     global default_dir
     global image_dir
     global video_dir
     global shape
 
-    default_dir = "/TEST_MODEL/UCF-101-image/"
+    if data_dir == None:
+        default_dir = "/TEST_MODEL/UCF-101-image/"
+    else:
+        default_dir = data_dir
+
     Set_video_dir(default_dir)
     Set_image_dir(default_dir)
     shape = None
@@ -169,7 +173,7 @@ def Data_split(x_data, train_test_ratio = 0.7):
         
     return np.array(x_train), np.array(x_test)
 
-def data_batch_loader_forward(data_batch):
+def data_batch_loader_forward(data_batch, size = None):
     while True:
         for scene in range(len(data_batch)):
             for longcut in data_batch[scene]["path"]:
@@ -179,9 +183,14 @@ def data_batch_loader_forward(data_batch):
                     for image_path in data_batch[scene]["path"][longcut][cut]:
                         #to check working properly
                         #print(image_path)
-                        yield Image_read(image_path), cut
+                        if size == None:
+                            yield Image_read(image_path), cut
+                        else:
+                            img = cv2.resize(cv2.imread(image_path), size)
+                            img = np.transpose(img, (1, 0, 2))
+                            yield img, cut
 
-def data_batch_loader_backward(data_batch):
+def data_batch_loader_backward(data_batch, size = None):
     while True:
         for scene in range(len(data_batch)):
             for longcut in data_batch[scene]["path"]:
@@ -191,7 +200,12 @@ def data_batch_loader_backward(data_batch):
                     for image_path in reversed(data_batch[scene]["path"][longcut][cut]):
                         #to check working properly
                         #print(image_path)
-                        yield Image_read(image_path), cut
+                        if size == None:
+                                yield Image_read(image_path), cut
+                        else:
+                            img = cv2.resize(cv2.imread(image_path), size)
+                            img = np.transpose(img, (1, 0, 2))
+                            yield img, cut
 
 def Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward):
     
@@ -345,13 +359,13 @@ class MaskGenerator():
         for _ in range(randint(1, 20)):
             x1, x2 = randint(1, self.width), randint(1, self.width)
             y1, y2 = randint(1, self.height), randint(1, self.height)
-            thickness = randint(0, size)
+            thickness = randint(1, size)
             cv2.line(img,(x1,y1),(x2,y2),(1,1,1),thickness)
             
         # Draw random circles
         for _ in range(randint(1, 20)):
             x1, y1 = randint(1, self.width), randint(1, self.height)
-            radius = randint(0, size)
+            radius = randint(1, size)
             cv2.circle(img,(x1,y1),radius,(1,1,1), -1)
             
         # Draw random ellipses
@@ -359,7 +373,7 @@ class MaskGenerator():
             x1, y1 = randint(1, self.width), randint(1, self.height)
             s1, s2 = randint(1, self.width), randint(1, self.height)
             a1, a2, a3 = randint(3, 180), randint(3, 180), randint(3, 180)
-            thickness = randint(0, size)
+            thickness = randint(1, size)
             cv2.ellipse(img, (x1,y1), (s1,s2), a1, a2, a3,(1,1,1), thickness)
         
         return 1-img

@@ -239,6 +239,7 @@ def train():
 
     
 if __name__ == "__main__":
-    Init_dataloader()
+    Data_dir = '../3D_model/DATASET/UCF-101/'
+    Init_dataloader(Data_dir)
     train()
 
