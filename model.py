@@ -279,13 +279,13 @@ def l1(y_true, y_pred):
 
 '''
 
-def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4):
+def network_generate(data_shape= (320, 240, 3), sampling_frame=8, vid_net_mid_depth=3, frame_net_mid_depth=4, learn_rate = 0.01):
     Init_dataloader()
-
-    optimizer_3dnet = Adam(lr=0.01)
-    #optimizer_subnet = Adam(lr=0.01)
-    optimizer_combnet = Adam(lr=0.01)
-    #optimizer_final = Adam(lr=0.0001)
+    
+    optimizer_3dnet = Adam(lr=learn_rate)
+    #optimizer_subnet = Adam(lr=learn_rate)
+    optimizer_combnet = Adam(lr=learn_rate)
+    #optimizer_final = Adam(lr=learn_rate)
 
     input_frame = Input( shape=data_shape )
     input_video = Input( shape=(sampling_frame, int(data_shape[0]/2), int(data_shape[1]/2), 3) )

@@ -1,91 +1,119 @@
 
-# Video Inpainting NN model
-
+# Video/Image Inpainting NN model
 # INIT 2019.05.13.
+# deep learning model for Video Inpainting / Image Inpainting
 
-# deep learning model for Video Inpainting 
+## Dataset 
 
-# train Dataset  ==> UCF-101
-not finished, on coding now
+    * UCF-101
+    * https://www.crcv.ucf.edu/data/UCF101.php
 
-reference
+## to train video inpainting (frames of video)
 
-https://arxiv.org/pdf/1806.08482.pdf
+    * run train.py
 
--mainly considered
+    <pre><code>
+    python3 train.py
+    </code></pre>
 
-https://arxiv.org/pdf/1806.08482.pdf
+## to train image inpainting (frame by frame)
 
-https://arxiv.org/pdf/1905.02884.pdf
+    * run train_image_pdCN.py
 
-https://arxiv.org/pdf/1711.10925.pdf
+    <pre><code>
+    python3 train_image_pdCN.py
+    </code></pre>
 
-https://arxiv.org/pdf/1804.07723.pdf
+## Model Architecture
 
-https://arxiv.org/pdf/1811.11718.pdf
+### Video Inpainting
 
-https://arxiv.org/pdf/1810.08771.pdf
+    * 3D UNet
+    * 2D Unet
+    * Combination NN
+    * etc...
 
-https://arxiv.org/pdf/1803.02077.pdf
+### Image Inpainting
 
-https://arxiv.org/pdf/1803.04626.pdf
+    * PConvolution
+    * DliatedConvolution
+    * Unet-like 
+    * etc...
 
-https://arxiv.org/pdf/1903.04227.pdf
+## reference
 
-https://arxiv.org/pdf/1611.09969.pdf
+1. https://arxiv.org/pdf/1806.08482.pdf
 
-https://arxiv.org/pdf/1611.07004.pdf
+2. https://arxiv.org/pdf/1905.02884.pdf
 
-https://arxiv.org/pdf/1808.03344.pdf
+3. https://arxiv.org/pdf/1711.10925.pdf
 
-https://arxiv.org/pdf/1808.06601.pdf
+4. https://arxiv.org/pdf/1804.07723.pdf
 
-https://medium.com/@jonathan_hui/gan-self-attention-generative-adversarial-networks-sagan-923fccde790c
+5. https://arxiv.org/pdf/1811.11718.pdf
 
-https://bluediary8.tistory.com/38
+6. https://arxiv.org/pdf/1810.08771.pdf
 
-https://arxiv.org/abs/1809.11096
+7. https://arxiv.org/pdf/1803.02077.pdf
 
-https://github.com/adamstseng/general-deep-image-completion
+8. https://arxiv.org/pdf/1803.04626.pdf
 
-http://sanghyukchun.github.io/93/
+9. https://arxiv.org/pdf/1903.04227.pdf
 
-https://adjidieng.github.io/Papers/skipvae.pdf
+10. https://arxiv.org/pdf/1611.09969.pdf
 
-http://iizuka.cs.tsukuba.ac.jp/projects/completion/en/
+11. https://arxiv.org/pdf/1611.07004.pdf
 
-https://github.com/lyndonzheng/Pluralistic-Inpainting
+12. https://arxiv.org/pdf/1808.03344.pdf
 
-https://github.com/MingtaoGuo/DCGAN_WGAN_WGAN-GP_LSGAN_SNGAN_RSGAN_BEGAN_ACGAN_PGGAN_TensorFlow
+13. https://arxiv.org/pdf/1808.06601.pdf
 
-https://github.com/MathiasGruber/PConv-Keras
+14. https://medium.com/@jonathan_hui/gan-self-attention-generative-adversarial-networks-sagan-923fccde790c
 
-https://taeoh-kim.github.io/blog/gan%EC%9D%84-%EC%9D%B4%EC%9A%A9%ED%95%9C-image-to-image-translation-pix2pix-cyclegan-discogan/
+15. https://bluediary8.tistory.com/38
 
-https://medium.com/@pix2pix.datascience/investigating-the-impact-of-preprocessing-on-image-to-image-translation-a5273d49511e
+16. https://arxiv.org/abs/1809.11096
 
-https://medium.com/@jctestud/video-generation-with-pix2pix-aed5b1b69f57
+17. https://github.com/adamstseng/general-deep-image-completion
 
-https://medium.com/@Synced/nvidia-mit-csail-open-source-video-to-video-synthesis-method-6c876ced2957
+18. http://sanghyukchun.github.io/93/
 
-https://arxiv.org/pdf/1812.09079.pdf
+19. https://adjidieng.github.io/Papers/skipvae.pdf
 
-https://github.com/flyywh/Video-Super-Resolution
+20. http://iizuka.cs.tsukuba.ac.jp/projects/completion/en/
 
-https://arxiv.org/pdf/1711.06106.pdf
+21. https://github.com/lyndonzheng/Pluralistic-Inpainting
 
-https://arxiv.org/pdf/1806.08482.pdf
+22. https://github.com/MingtaoGuo/DCGAN_WGAN_WGAN-GP_LSGAN_SNGAN_RSGAN_BEGAN_ACGAN_PGGAN_TensorFlow
 
-https://www.profillic.com/paper/arxiv:1901.03419
+23. https://github.com/MathiasGruber/PConv-Keras
 
-https://www.semanticscholar.org/paper/H-DenseUNet%3A-Hybrid-Densely-Connected-UNet-for-and-Li-Chen/a86d7289c76d832e83c99539859b7b186e4ea6c8
+24. https://taeoh-kim.github.io/blog/gan%EC%9D%84-%EC%9D%B4%EC%9A%A9%ED%95%9C-image-to-image-translation-pix2pix-cyclegan-discogan/
 
-https://arxiv.org/abs/1705.00053
+25. https://medium.com/@pix2pix.datascience/investigating-the-impact-of-preprocessing-on-image-to-image-translation-a5273d49511e
 
-https://www.offconvex.org/2018/03/12/bigan/
+26. https://medium.com/@jctestud/video-generation-with-pix2pix-aed5b1b69f57
 
-https://github.com/SKTBrain/DiscoGAN/blob/master/discogan/model.py
+27. https://medium.com/@Synced/nvidia-mit-csail-open-source-video-to-video-synthesis-method-6c876ced2957
 
-https://arxiv.org/pdf/1609.04802.pdf
+28. https://arxiv.org/pdf/1812.09079.pdf
 
-https://wwwpub.zih.tu-dresden.de/~ds24/lehre/ml_ws_2013/ml_11_hinge.pdf
+29. https://github.com/flyywh/Video-Super-Resolution
+
+30. https://arxiv.org/pdf/1711.06106.pdf
+
+31. https://arxiv.org/pdf/1806.08482.pdf
+
+32. https://www.profillic.com/paper/arxiv:1901.03419
+
+33. https://www.semanticscholar.org/paper/H-DenseUNet%3A-Hybrid-Densely-Connected-UNet-for-and-Li-Chen/a86d7289c76d832e83c99539859b7b186e4ea6c8
+
+34. https://arxiv.org/abs/1705.00053
+
+35. https://www.offconvex.org/2018/03/12/bigan/
+
+36. https://github.com/SKTBrain/DiscoGAN/blob/master/discogan/model.py
+
+37. https://arxiv.org/pdf/1609.04802.pdf
+
+38. https://wwwpub.zih.tu-dresden.de/~ds24/lehre/ml_ws_2013/ml_11_hinge.pdf

@@ -2,7 +2,7 @@ from model import *
 from DataWeight_load import *
 from result_plot import *
 import matplotlib.pyplot as plt
-
+#from Pconv_model import *
 def train_one_epoch(mask_loader, half_mask_loader, train_CN3D, train_dataloader, val_dataloader, batch_size, frame_size):
     
     vid_train_batch = [ iter_to_one_batch(train_dataloader, frame_size) for i in range(batch_size) ]
@@ -108,6 +108,7 @@ def train():
     FRAME_SIZE = 8
     EPOCH = 40000
     SAVE_TERM_PER_EPOCH = 500
+    LEARN_RATE = 0.01
 
     MODEL_DIR = "model_log/"
     TRAIN_LOG_DIR ="train_log/"
@@ -150,7 +151,7 @@ def train():
     '''
     CN3D_model, CombCN_model = None, None
     CN3D_model, CombCN_model = network_generate(sampling_frame=8, data_shape=img_shape, 
-                                                            vid_net_mid_depth=3, frame_net_mid_depth=4)    
+                                                            vid_net_mid_depth=3, frame_net_mid_depth=4,learn_rate = LEARN_RATE)    
     try:
         CN3D_model = Weight_load(CN3D_model, MODEL_DIR + "CN3D.h5")
         CombCN_model = Weight_load(CombCN_model, MODEL_DIR + "CombCN.h5")
@@ -166,7 +167,6 @@ def train():
            
                 masked_in, result, raw_img = test_one_epoch(mask_loader, half_mask_loader,
                                                 train_dataloader_forward, val_dataloader_forward, BATCH_SIZE, FRAME_SIZE)    
-
                 fig = plt.figure()
 
                 rows = BATCH_SIZE
@@ -232,7 +232,7 @@ def train():
                                             train_dataloader_backward, val_dataloader_backward, BATCH_SIZE, FRAME_SIZE)    
             print(str(i+1) + " epochs train  backward done ==> total loss on this epoch : " + str(backward_loss))        
             train_log.write(" " + str(backward_loss) + "\n")
-                
+
         except:
             continue
 
