@@ -20,7 +20,6 @@ from keras.optimizers import adam, Adam
 from pconv_layer_2D import PConv2D
 from DataWeight_load import *
 
-
 def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_net_mid_depth = 4):
     
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
@@ -60,7 +59,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
     e_conv7, e_mask7 = encoder_layer(e_conv6, e_mask6, 512, 3)
     e_conv8, e_mask8 = encoder_layer(e_conv7, e_mask7, 512, 3)
     
-    #Dliation NN
+    #Dliated NN
     fc_mid = e_conv8
     fc_mid_mask = e_mask8
     fc_prev = e_conv8
@@ -146,6 +145,114 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
 
 from keras.losses import mse
 
+###### from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/pconv_model.py
+from keras.applications import VGG16
+vgg_model = None
+
+def build_vgg(weights="imagenet"):
+    """
+    Load pre-trained VGG16 from keras applications
+    Extract features to be used in loss function from last conv layer, see architecture at:
+    https://github.com/keras-team/keras/blob/master/keras/applications/vgg16.py
+    """        
+        
+    # Input image to extract features from
+    img = Input(shape=(self.img_rows, self.img_cols, 3))
+
+    # Mean center and rescale by variance as in PyTorch
+    processed = Lambda(lambda x: (x-self.mean) / self.std)(img)
+    
+    # If inference only, just return empty model        
+            
+    # Get the vgg network from Keras applications
+    if weights in ['imagenet', None]:
+        vgg = VGG16(weights=weights, include_top=False)
+    else:
+        vgg = VGG16(weights=None, include_top=False)
+        vgg.load_weights(weights, by_name=True)
+
+    # Output the first three pooling layers
+    vgg.outputs = [vgg.layers[i].output for i in self.vgg_layers]        
+    
+    # Create model and compile
+    model = Model(inputs=img, outputs=vgg(processed))
+    model.trainable = False
+    model.compile(loss='mse', optimizer='adam')
+
+    return model
+def loss_total(mask):
+    """
+    Creates a loss function which sums all the loss components 
+    and multiplies by their weights. See paper eq. 7.
+    """
+    def loss(y_true, y_pred):
+
+        # Compute predicted image with non-hole pixels set to ground truth
+        y_comp = mask * y_true + (1-mask) * y_pred
+
+        # Compute the vgg features. 
+        if self.vgg_device:
+            with tf.device(self.vgg_device):
+                vgg_out = self.vgg(y_pred)
+                vgg_gt = self.vgg(y_true)
+                vgg_comp = self.vgg(y_comp)
+        else:
+            vgg_out = self.vgg(y_pred)
+            vgg_gt = self.vgg(y_true)
+            vgg_comp = self.vgg(y_comp)
+        
+        # Compute loss components
+        l1 = self.loss_valid(mask, y_true, y_pred)
+        l2 = self.loss_hole(mask, y_true, y_pred)
+        l3 = self.loss_perceptual(vgg_out, vgg_gt, vgg_comp)
+        l4 = self.loss_style(vgg_out, vgg_gt)
+        l5 = self.loss_style(vgg_comp, vgg_gt)
+        l6 = self.loss_tv(mask, y_comp)
+
+        # Return loss function
+        return l1 + 6*l2 + 0.05*l3 + 120*(l4+l5) + 0.1*l6
+
+    return loss
+
+def loss_hole(self, mask, y_true, y_pred):
+    """Pixel L1 loss within the hole / mask"""
+    return self.l1((1-mask) * y_true, (1-mask) * y_pred)
+
+def loss_valid(self, mask, y_true, y_pred):
+    """Pixel L1 loss outside the hole / mask"""
+    return self.l1(mask * y_true, mask * y_pred)
+
+def loss_perceptual(self, vgg_out, vgg_gt, vgg_comp): 
+    """Perceptual loss based on VGG16, see. eq. 3 in paper"""       
+    loss = 0
+    for o, c, g in zip(vgg_out, vgg_comp, vgg_gt):
+        loss += self.l1(o, g) + self.l1(c, g)
+    return loss
+    
+def loss_style(self, output, vgg_gt):
+    """Style loss based on output/computation, used for both eq. 4 & 5 in paper"""
+    loss = 0
+    for o, g in zip(output, vgg_gt):
+        loss += self.l1(self.gram_matrix(o), self.gram_matrix(g))
+    return loss
+
+def loss_tv(self, mask, y_comp):
+    """Total variation loss, used for smoothing the hole region, see. eq. 6"""
+
+    # Create dilated hole region using a 3x3 kernel of all 1s.
+    kernel = K.ones(shape=(3, 3, mask.shape[3], mask.shape[3]))
+    dilated_mask = K.conv2d(1-mask, kernel, data_format='channels_last', padding='same')
+
+    # Cast values to be [0., 1.], and compute dilated hole region of y_comp
+    dilated_mask = K.cast(K.greater(dilated_mask, 0), 'float32')
+    P = dilated_mask * y_comp
+
+    # Calculate total variation loss
+    a = self.l1(P[:,1:,:,:], P[:,:-1,:,:])
+    b = self.l1(P[:,:,1:,:], P[:,:,:-1,:])        
+    return a+b
+###### from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/pconv_model.py
+
 def pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net_mid_depth=4, learn_rate = 0.01):
     Init_dataloader()
     
@@ -157,15 +264,13 @@ def pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net
     pdCN = P_D_model(input_frame= input_frame, input_mask = input_mask, frame_size=data_shape, sampling_frame=sampling_frame, frame_net_mid_depth =frame_net_mid_depth)
     pdCN_model = Model([input_frame, input_mask], pdCN)
     pdCN_model.summary()
-    pdCN_model.compile(optimizer=optimizer_pdCN, loss={'final_output' : 'mae'})
     
-    '''
-    def loss_func(image, mask):
-
-        return loss
-
+    # custom loss to learn better
     pdCN_model.compile(optimizer=optimizer_pdCN, loss=loss_func(input_frame, input_mask) )
-        '''
+
+    #pdCN_model.compile(optimizer=optimizer_pdCN, loss={'final_output' : 'mae'})
+    
+
     return pdCN_model
 
 
