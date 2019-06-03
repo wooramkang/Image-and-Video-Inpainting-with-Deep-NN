@@ -6,6 +6,10 @@ from Pconv_Dilatedconv_model import *
 
 def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
     batch_size = BATCH_SIZE
+    random_sample_size = 10000
+    
+    for i in range(randint(0, random_sample_size)):
+        next(train_dataloader)
 
     img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
 
@@ -59,7 +63,7 @@ def test():
         pdCN_model = pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE)
 
     try:
-        pdCN_model = Weight_load(pdCN_model, MODEL_DIR + "CN3D.h5")
+        pdCN_model = Weight_load(pdCN_model, MODEL_DIR + "pdCN.h5")
         print("load saved model done")
     except:
         print("No saved model")

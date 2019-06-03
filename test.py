@@ -3,8 +3,13 @@ from DataWeight_load import *
 from result_plot import *
 import matplotlib.pyplot as plt
 
-def test_one_epoch(mask_loader, half_mask_loader, train_dataloader, val_dataloader, batch_size, frame_size):
+def test_one_epoch(mask_loader, half_mask_loader, train_dataloader, val_dataloader, batch_size, frame_size):    
     
+    random_sample_size = 10000
+    
+    for i in range(randint(0, random_sample_size)):
+        next(train_dataloader)
+
     vid_train_batch = [ iter_to_one_batch(train_dataloader, frame_size) for i in range(batch_size) ]
     img_train_batch = np.array([ frame_per_batch[len(frame_per_batch)-1] for frame_per_batch in vid_train_batch])
     vid_train_batch = np.array([ image_to_half_size(batch) for batch in vid_train_batch])

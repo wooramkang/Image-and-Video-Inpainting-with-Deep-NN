@@ -43,7 +43,7 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
 def train():
     BATCH_SIZE = 4
     EPOCH = 40000
-    SAVE_TERM_PER_EPOCH = 500
+    SAVE_TERM_PER_EPOCH = 400
     LEARN_RATE = 0.001
     MODEL_DIR = "img_model_log/"
     TRAIN_LOG_DIR ="img_train_log/"
@@ -81,52 +81,52 @@ def train():
         pdCN_model = pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE)
 
     try:
-        pdCN_model = Weight_load(pdCN_model, MODEL_DIR + "CN3D.h5")
+        pdCN_model = Weight_load(pdCN_model, MODEL_DIR + "pdCN.h5")
         print("load saved model done")
     except:
         print("No saved model")
 
     for i in range(EPOCH):
         train_log.write(str(i+1) + " ")
-        #try:
-        if i % SAVE_TERM_PER_EPOCH == 0:
-            train_log.close()
-            train_log = open( TRAIN_LOG_DIR + "train_log.log", "a")
-            masked_in, result, raw_img = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE)   
-            fig = plt.figure()
-            rows = BATCH_SIZE
-            cols = 3
-            c = 0
-            
-            for j in range(BATCH_SIZE):
-                c = c+1
-                ax = fig.add_subplot(rows, cols, c)
-                mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
-                ax.imshow(mask_ax)
-                cv2.imwrite(TRAIN_LOG_DIR + "img_mask_" + str(i) + "_" + str(j) + ".jpg", mask_ax)
+        try:
+            if i % SAVE_TERM_PER_EPOCH == 0:
+                train_log.close()
+                train_log = open( TRAIN_LOG_DIR + "train_log.log", "a")
+                masked_in, result, raw_img = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE)   
+                fig = plt.figure()
+                rows = BATCH_SIZE
+                cols = 3
+                c = 0
+                
+                for j in range(BATCH_SIZE):
+                    c = c+1
+                    ax = fig.add_subplot(rows, cols, c)
+                    mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
+                    ax.imshow(mask_ax)
+                    cv2.imwrite(TRAIN_LOG_DIR + "img_mask_" + str(i) + "_" + str(j) + ".jpg", mask_ax)
 
-                c = c+1
-                ax2 = fig.add_subplot(rows, cols, c)
-                result_ax = cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB)
-                cv2.imwrite(TRAIN_LOG_DIR + "img_result_" + str(i) + "_" + str(j) + ".jpg", result_ax)
-                ax2.imshow(result_ax)
+                    c = c+1
+                    ax2 = fig.add_subplot(rows, cols, c)
+                    result_ax = cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB)
+                    cv2.imwrite(TRAIN_LOG_DIR + "img_result_" + str(i) + "_" + str(j) + ".jpg", result_ax)
+                    ax2.imshow(result_ax)
 
-                c = c+1
-                ax3 = fig.add_subplot(rows, cols, c)
-                raw_img_ax = cv2.cvtColor(np.uint8(raw_img[j, :]), cv2.COLOR_BGR2RGB)
-                cv2.imwrite(TRAIN_LOG_DIR + "img_raw_" + str(i) + "_" + str(j) + ".jpg", raw_img_ax)
-                ax3.imshow(raw_img_ax)
+                    c = c+1
+                    ax3 = fig.add_subplot(rows, cols, c)
+                    raw_img_ax = cv2.cvtColor(np.uint8(raw_img[j, :]), cv2.COLOR_BGR2RGB)
+                    cv2.imwrite(TRAIN_LOG_DIR + "img_raw_" + str(i) + "_" + str(j) + ".jpg", raw_img_ax)
+                    ax3.imshow(raw_img_ax)
 
-            #to check the training result
-            #plt.show()
-            Weight_save(pdCN_model, MODEL_DIR + "pdCN.h5")
+                #to check the training result
+                #plt.show()
+                Weight_save(pdCN_model, MODEL_DIR + "pdCN.h5")
 
-        print("train forward")
-        forward_loss = train_one_epoch(mask_loader, train_dataloader_forward, BATCH_SIZE)    
-        print(str(i+1) + " epochs train done ==> total loss on this epoch : " + str(forward_loss))
-        train_log.write(" " + str(forward_loss))
-        #except:
-            #continue
+            print("train forward")
+            forward_loss = train_one_epoch(mask_loader, train_dataloader_forward, BATCH_SIZE)    
+            print(str(i+1) + " epochs train done ==> total loss on this epoch : " + str(forward_loss))
+            train_log.write(" " + str(forward_loss))
+        except:
+            continue
 
 if __name__ == "__main__":
     Data_dir = '../3D_model/DATASET/UCF-101/'
