@@ -46,8 +46,6 @@ def test():
         print(img_shape)
         print("###")
     
-    train_log = open( TRAIN_LOG_DIR + "train_log.log", "w")
-    
     global pdCN_model
     pdCN_model = None
 
