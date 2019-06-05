@@ -1,4 +1,9 @@
-# base-code from keras team https://github.com/keras-team/keras-contrib/blob/master/keras_contrib/applications/resnet.py
+# base-code from keras-team https://github.com/keras-team/keras-contrib/blob/master/keras_contrib/applications/resnet.py
+# personal change_list from original codes
+# relu -> leakyrelu
+# output size is not fixed 2048 after global averagepooling and is changing depending on the input_size of images
+# add additional layers or reduce filter numbers
+
 from __future__ import division
 
 import six
@@ -382,11 +387,5 @@ def ResNet_encoder(input_shape, classes):
     return ResNet(input_shape, classes, bottleneck, repetitions=[3, 4, 6, 3], initial_filters= 64 )
     
 if __name__ == "__main__":
-    model = ResNet_encoder((224, 224*2, 3), None)
+    model = ResNet_encoder((112, 112, 3), None)
     model.summary()
-
-
-# change_list from original model
-# relu -> leakyrelu
-# output size is not fixed 2048 after global averagepooling and is changing depending on the input_size of images
-# add additional layers or reduce filter numbers
