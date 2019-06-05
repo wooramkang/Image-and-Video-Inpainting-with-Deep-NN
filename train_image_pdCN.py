@@ -43,7 +43,7 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
 def train():
     BATCH_SIZE = 4
     EPOCH = 40000
-    SAVE_TERM_PER_EPOCH = 400
+    SAVE_TERM_PER_EPOCH = 500
     LEARN_RATE = 0.001
     MODEL_DIR = "img_model_log/"
     TRAIN_LOG_DIR ="img_train_log/"

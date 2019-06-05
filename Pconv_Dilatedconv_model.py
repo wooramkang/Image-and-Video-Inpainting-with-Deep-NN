@@ -145,7 +145,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
 
 from keras.losses import mse
 
-###### from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/pconv_model.py
+###### loss function from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/pconv_model.py
 from keras.applications import VGG16
 vgg_model = None
 
@@ -157,7 +157,7 @@ def build_vgg(weights="imagenet"):
     """        
         
     # Input image to extract features from
-    img = Input(shape=(self.img_rows, self.img_cols, 3))
+    img = Input(shape=(512, 512, 3))
 
     # Mean center and rescale by variance as in PyTorch
     processed = Lambda(lambda x: (x-self.mean) / self.std)(img)
@@ -251,7 +251,7 @@ def loss_tv(self, mask, y_comp):
     a = self.l1(P[:,1:,:,:], P[:,:-1,:,:])
     b = self.l1(P[:,:,1:,:], P[:,:,:-1,:])        
     return a+b
-###### from https://github.com/MathiasGruber/PConv-Keras/blob/master/libs/pconv_model.py
+
 
 def pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net_mid_depth=4, learn_rate = 0.01):
     Init_dataloader()
@@ -266,9 +266,9 @@ def pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net
     pdCN_model.summary()
     
     # custom loss to learn better
-    pdCN_model.compile(optimizer=optimizer_pdCN, loss=loss_func(input_frame, input_mask) )
+    #pdCN_model.compile(optimizer=optimizer_pdCN, loss=loss_func(input_frame, input_mask) )
 
-    #pdCN_model.compile(optimizer=optimizer_pdCN, loss={'final_output' : 'mae'})
+    pdCN_model.compile(optimizer=optimizer_pdCN, loss={'final_output' : 'mae'})
     
 
     return pdCN_model
