@@ -24,7 +24,7 @@
 
 ## to test video inpainting (frames of video)
 
-### Video model is updating
+### Video model is on updating
 
 
 ## Model Architecture
