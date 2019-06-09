@@ -22,18 +22,12 @@
 
 ## to train video inpainting (frames of video)
 
-~~run train.py ~~
-~~python3 train.py ~~
-
 ## to test video inpainting (frames of video)
-
-~~run test.py ~~
-~~python3 test.py ~~
 
 ### Video model is updating
 
-## Model Architecture
 
+## Model Architecture
 
 
 ### Video Inpainting
