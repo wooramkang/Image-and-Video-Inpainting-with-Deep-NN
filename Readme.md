@@ -10,9 +10,9 @@
 
 ## to train video inpainting (frames of video)
 
-    * run train.py
+~~  * run train.py ~~
 
-    python3 train.py
+~~ python3 train.py ~~
 
 ## to train image inpainting (frame by frame)
 
@@ -22,9 +22,9 @@
 
 ## to test video inpainting (frames of video)
 
-    * run test.py
+~~ * run test.py ~~
 
-    python3 test.py
+~~ python3 test.py ~~
 
 ## to test image inpainting (frame by frame)
 
@@ -32,6 +32,7 @@
 
     python3 test_pdCN.py
 
+### video model on updating
 
 ## Model Architecture
 
