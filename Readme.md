@@ -8,23 +8,11 @@
     * UCF-101
     * https://www.crcv.ucf.edu/data/UCF101.php
 
-## to train video inpainting (frames of video)
-
-~~  * run train.py ~~
-
-~~ python3 train.py ~~
-
 ## to train image inpainting (frame by frame)
 
     * run train_image_pdCN.py
 
     python3 train_image_pdCN.py
-
-## to test video inpainting (frames of video)
-
-~~ * run test.py ~~
-
-~~ python3 test.py ~~
 
 ## to test image inpainting (frame by frame)
 
@@ -32,9 +20,15 @@
 
     python3 test_pdCN.py
 
-### video model on updating
+## to train video inpainting (frames of video)
+
+## to test video inpainting (frames of video)
+
+### Video model is on updating
+
 
 ## Model Architecture
+
 
 ### Video Inpainting
 
