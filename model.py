@@ -253,6 +253,7 @@ def CombCN(input_frame, input_video, video_size=None, sampling_frame=8, frame_ne
     d_out = Conv2D(filters=3, padding='same', kernel_size = 3)(d1_CCC)
     #d_out = Bat(d_out)
     d_out = Activation('tanh')(d_out)
+    
     print(d_out.get_shape())
 
     return d_out
