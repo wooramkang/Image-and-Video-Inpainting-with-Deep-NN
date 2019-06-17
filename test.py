@@ -1,6 +1,5 @@
 from model import *
 from DataWeight_load import *
-from result_plot import *
 import matplotlib.pyplot as plt
 
 def test_one_epoch(mask_loader, half_mask_loader, train_dataloader, val_dataloader, batch_size, frame_size):    

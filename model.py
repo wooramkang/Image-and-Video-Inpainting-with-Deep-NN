@@ -21,7 +21,6 @@ from pconv_layer_2D import PConv2D
 #NEED TO IMPORT PConv3D
 from DataWeight_load import *
 
-
 def CN3D(input_video = None, sampling_frame= 8,  vid_net_mid_depth = 3):
     Activ = lambda x: LeakyReLU(alpha=0.2)(x)
     Bat = lambda x: BatchNormalization()(x)

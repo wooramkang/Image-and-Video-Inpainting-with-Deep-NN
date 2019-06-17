@@ -1,9 +1,13 @@
 # base-code from keras-team https://github.com/keras-team/keras-contrib/blob/master/keras_contrib/applications/resnet.py
 
 # personal change_list from original codes so far
+
+# FOR ENCODER
 # relu -> leakyrelu
 # output size is not fixed 2048 after global averagepooling and is changing depending on the input_size of images
 # add additional layers or reduce filter numbers
+
+# FOR DECODER
 # linear upsampling decoder (not resnet decoder)
 
 from __future__ import division
@@ -15,10 +19,10 @@ from keras.layers import Activation
 from keras.layers import Reshape
 from keras.layers import Dense
 from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
+from keras.layers import MaxPooling2D, AveragePooling2D
 from keras.layers import GlobalMaxPooling2D
 from keras.layers import GlobalAveragePooling2D
-from keras.layers import Dropout
+from keras.layers import Dropout, Flatten
 from keras.layers.merge import add
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
@@ -378,8 +382,12 @@ def ResNet(input_shape=None,  block='bottleneck', residual_unit='v2',
                                 transition_strides=transition_strides,
                                 residual_unit=residual_unit)(block)
         filters *= 2
-
+    #dense_size = int(int(x.get_shape()[1])/2)
+    #dense_crit = int(x.get_shape()[2])
     x = _bn_leakyrelu(block)
+    #x = AveragePooling2D()(x)
+    #x = Flatten()(x)
+    #x = Dense(dense_crit * dense_size)(x)
     x = GlobalAveragePooling2D()(x)
 
     model = Model(inputs=img_input, outputs=x)
@@ -402,20 +410,25 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
     input_node = Input(shape = input_shape )
 
     x = Dense( int(init_channel * 4) )(input_node)
+    x = BatchNormalization()(x)
     x = LeakyReLU(0.2)(x)
+
     x = Dense( int(init_channel*4) )(x)
+    x = BatchNormalization()(x)
     x = LeakyReLU(0.2)(x)
+    
     x = Reshape( (2, 2, init_channel) )(x)
     
     print(x.get_shape())
 
     x = Conv2D(strides=1, filters=init_channel, kernel_size= 7, padding='same')(x)
+    x = BatchNormalization()(x)
     x = LeakyReLU(0.2)(x)
         
     repetition = (int(math.log2(target_shape[0]))) - 1 #- 4)
     filters = init_channel
 
-    for i in range(repetition-1):
+    for i in range(repetition - 1):
         x = UpSampling2D()(x)
         x = Conv2D(strides=1, filters= filters, kernel_size= 5, padding='same')(x)
         x = BatchNormalization()(x)
@@ -433,10 +446,11 @@ def Decoder(input_shape, target_shape):
     return Upsample_Decoder(input_shape=input_shape, target_shape=target_shape, initial_kernel_size=(7, 7), initial_pooling='max')
 
 
+# FOR TESTING EN-DE CODER MODEL 
 if __name__ == "__main__":
 
-    raw_input_shape = (256, 256, 3)
-    target_output_shape = (512, 512, 3)
+    raw_input_shape = (128, 128, 3)
+    target_output_shape = (256, 256, 3)
 
     en_model = Encoder( raw_input_shape )
     en_model.summary()
@@ -449,7 +463,6 @@ if __name__ == "__main__":
     de_model.summary()
 
     raw_inputs = Input( (raw_input_shape[0], raw_input_shape[1], raw_input_shape[2], ) )
-
     full_model = Model(inputs = raw_inputs, outputs = de_model(en_model(raw_inputs )) )
 
     full_model.summary()

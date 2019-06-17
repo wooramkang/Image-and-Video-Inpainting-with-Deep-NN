@@ -1,6 +1,5 @@
 #from model import *
 from DataWeight_load import *
-from result_plot import *
 import matplotlib.pyplot as plt
 from Pconv_Dilatedconv_model import *
 

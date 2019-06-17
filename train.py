@@ -1,6 +1,5 @@
 from model import *
 from DataWeight_load import *
-from result_plot import *
 import matplotlib.pyplot as plt
 #from Pconv_model import *
 def train_one_epoch(mask_loader, half_mask_loader, train_CN3D, train_dataloader, val_dataloader, batch_size, frame_size):

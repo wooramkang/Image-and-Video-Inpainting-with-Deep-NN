@@ -154,6 +154,32 @@ def Img_loader():
 
     return x_data
 
+###### ON GOING 
+
+def flow_loader(flow_dir=None, ):
+    flows = []
+    
+    folders_root = os.listdir(flow_dir)
+    for name in folders_root:
+        folders_son = os.listdir(image_dir+name)
+
+        flow = dict()
+        flow["name"] = name    
+        flow["path"] = dict()
+
+        for name_son in folders_son:        
+            folder_property = name_son.split('_')
+    
+            
+            for file in glob.glob(image_dir + name + "/" + name_son + "/*"):
+                #LOAD IMG i,  IMG i+1,  FLOW(file)
+                print("XXX")
+
+        flows.append(flow)
+
+    return flows
+
+
 def Data_split(x_data, train_test_ratio = 0.7):
     #params
     #to split data to train and validate OR to train and test
@@ -293,6 +319,13 @@ def image_to_half_size(image_batch):
         new_image_batch.append(  np.transpose(  cv2.resize(image, (int(shape[0]/2), int(shape[1]/2) ) ) , (1, 0, 2)))
 
     return np.array(new_image_batch)
+
+def flow_to_image(prev_image = None, flow = None):
+    covered_img = None
+
+
+
+    return covered_img
 
 def image_masking(image_batch, mask_batch):
     if len(image_batch) != len(mask_batch):
