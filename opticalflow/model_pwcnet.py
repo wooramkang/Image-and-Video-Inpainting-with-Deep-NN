@@ -18,14 +18,14 @@ import tensorflow as tf
 from tqdm import trange
 from tensorflow.contrib.mixed_precision import LossScaleOptimizer, FixedLossScaleManager
 
-from model_base import ModelBase
-from optflow import flow_write, flow_write_as_png, flow_mag_stats
-from losses import pwcnet_loss
-from logger import OptFlowTBLogger
-from multi_gpus import assign_to_device, average_gradients
-from core_warp import dense_image_warp
-from core_costvol import cost_volume
-from utils import tf_where
+from opticalflow.model_base import ModelBase
+from opticalflow.optflow import flow_write, flow_write_as_png, flow_mag_stats
+from opticalflow.losses import pwcnet_loss
+from opticalflow.logger import OptFlowTBLogger
+from opticalflow.multi_gpus import assign_to_device, average_gradients
+from opticalflow.core_warp import dense_image_warp
+from opticalflow.core_costvol import cost_volume
+from opticalflow.utils import tf_where
 
 _DEBUG_USE_REF_IMPL = False
 

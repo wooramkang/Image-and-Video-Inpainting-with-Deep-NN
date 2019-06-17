@@ -26,7 +26,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import numpy as np
 
-from visualize import plot_img_pairs_w_flows
+from opticalflow.visualize import plot_img_pairs_w_flows
 
 
 class TBLogger(object):
