@@ -11,8 +11,8 @@ Licensed under the MIT License (see LICENSE for details)
 from __future__ import absolute_import, division, print_function
 import matplotlib.pyplot as plt
 
-from opticalflow.utils import clean_dst_file
-from opticalflow.optflow import flow_to_img
+from utils import clean_dst_file
+from optflow import flow_to_img
 
 
 def plot_img_pairs_w_flows(

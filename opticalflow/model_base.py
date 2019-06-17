@@ -13,11 +13,11 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from opticalflow.ckpt_mgr import BestCheckpointSaver
-from opticalflow.logger import OptFlowTBLogger
-from opticalflow.dataset_base import _DBG_TRAIN_VAL_TEST_SETS
-from opticalflow.lr import lr_multisteps_long, lr_multisteps_fine, lr_cyclic_long, lr_cyclic_fine
-from opticalflow.mixed_precision import float32_variable_storage_getter
+from ckpt_mgr import BestCheckpointSaver
+from logger import OptFlowTBLogger
+from dataset_base import _DBG_TRAIN_VAL_TEST_SETS
+from lr import lr_multisteps_long, lr_multisteps_fine, lr_cyclic_long, lr_cyclic_fine
+from mixed_precision import float32_variable_storage_getter
 
 _DEBUG_USE_REF_IMPL = False
 

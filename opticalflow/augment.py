@@ -19,7 +19,7 @@ import numpy as np
 import cv2
 import random  # so we don't interfere with the use of np.random in the dataset loader
 
-from opticalflow.utils import scale
+from utils import scale
 
 _DBG_AUG_SET = -1
 

@@ -52,7 +52,7 @@ import numpy as np
 import cv2
 from skimage.io import imsave
 
-from opticalflow.utils import clean_dst_file
+from utils import clean_dst_file
 
 
 ##
