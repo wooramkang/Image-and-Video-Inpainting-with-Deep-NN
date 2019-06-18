@@ -1,7 +1,7 @@
 #from model import *
 from DataWeight_load import *
 import matplotlib.pyplot as plt
-from Pconv_Dilatedconv_model import *
+from pconv_Dilatedconv_model import *
 
 def train_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
     batch_size = BATCH_SIZE

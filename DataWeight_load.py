@@ -255,7 +255,7 @@ def Random_sampling_data(SAMPLE_BATCH_SIZE, data_batch_loader_forward):
 
     return np.array(sample_img_batch), np.array(sample_frames_batch)
 
-def iter_to_one_batch(iter, batch_size):
+def iter_to_one_batch(iter, batch_size, with_normalizing=True):
     data_batch = []
     temp = None
     __checker = None
@@ -271,7 +271,10 @@ def iter_to_one_batch(iter, batch_size):
             return np.array(data_batch)            
 
         count = i + 1
-        data_batch.append( image_normalization(temp) )
+        if with_normalizing:
+            data_batch.append( image_normalization(temp) )
+        else:
+            data_batch.append( temp )
 
     return np.array(data_batch)
 

@@ -44,7 +44,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
             conv = BatchNormalization(name='EncBN'+str(encoder_layer.counter))(conv, training=bn)
         conv = Activation('relu')(conv)
         encoder_layer.counter += 1
-        print(conv.get_shape())
+        #print(conv.get_shape())
         return conv, mask
 
     encoder_layer.counter = 0
@@ -75,7 +75,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
         fc_mid = Activ_re(fc_mid)
         f_temp = fc_mid
         fc_mid = Concatenate()([fc_prev, fc_mid])
-        print(fc_mid.get_shape())
+        #print(fc_mid.get_shape())
 
         fc_prev = f_temp
         
@@ -96,7 +96,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
     fc_mid = Conv2D(512, 3, dilation_rate = (p_num,p_num), strides=1, padding='same')(fc_mid)
     fc_mid = Bat(fc_mid)
     fc_mid_prev = Activ_re(fc_mid)
-    print(fc_mid.get_shape())
+    #print(fc_mid.get_shape())
 
     fc_mid_mask = Conv2D(512, 3,  dilation_rate = (p_num,p_num), strides=1, padding='same')(fc_mid_mask)
     fc_mid_mask = Bat(fc_mid_mask)
@@ -106,7 +106,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
     fc_mid = Conv2D(1024, 3, strides=2, padding='same')(fc_mid)#, fc_mid_mask])
     fc_mid = Bat(fc_mid)
     fc_mid = Activ_re(fc_mid)
-    print(fc_mid.get_shape())
+    #print(fc_mid.get_shape())
 
     fc_mid_mask = Concatenate()([e_mask8, fc_mid_mask_prev])
     fc_mid_mask = Conv2D(1024, 3, strides=2, padding='same')(fc_mid_mask)#, fc_mid_mask])
@@ -124,7 +124,7 @@ def P_D_model(input_frame, input_mask, frame_size=None, sampling_frame=8, frame_
             conv = BatchNormalization()(conv)
 
         conv = LeakyReLU(alpha=0.2)(conv)
-        print(conv.get_shape())
+        #print(conv.get_shape())
         return conv, mask
 
     #PConv_DECODE

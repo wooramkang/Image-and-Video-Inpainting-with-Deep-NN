@@ -2,6 +2,8 @@
 from DataWeight_load import *
 import matplotlib.pyplot as plt
 from pconv_Dilatedconv_model import *
+from flow_guide_frame_inpainting import inpainting_process
+from img_to_flow import img_to_optflow
 
 def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
     batch_size = BATCH_SIZE
@@ -10,23 +12,24 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
     for i in range(randint(0, random_sample_size)):
         next(train_dataloader)
 
-    img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
-    img_masked_batch = None
-    mask_batch = None
+    #img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
+    img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, False) )
     
+    _, flows_forward = img_to_optflow(img_train_batch, batch_size, 512, 512,direction=True, with_resizing = True)
+    img_train_batch, flows_backward = img_to_optflow(img_train_batch, batch_size, 512, 512, direction=False, with_resizing = True)
+
     #IMAGE BATCH
     mask_batch = np.array(mask_to_one_batch(mask_loader, batch_size))
     img_masked_batch = np.array(image_masking(img_train_batch, mask_batch) )
-    
-    pdCN_result = pdCN_model.predict_on_batch (  [img_masked_batch, mask_batch ] )
-    img_masked_batch = image_to_origin(img_masked_batch)
-    pdCN_result = image_to_origin(pdCN_result)
-    img_train_batch = image_to_origin(img_train_batch)
+    #img_masked_batch = image_to_origin(img_masked_batch)
 
-    return img_masked_batch, pdCN_result, img_train_batch
+    #flow_guide_frames, masked_frames, final_framses = inpainting_process( flows_forward, flows_backward, img_train_batch, mask_batch, batch_size, pdCN_model)
+    flow_guide_frames, masked_frames, final_framses = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, pdCN_model)
+
+    return flow_guide_frames, masked_frames, final_framses
 
 def test():
-    BATCH_SIZE = 4
+    BATCH_SIZE = 8
     LEARN_RATE = 0.001
     MODEL_DIR = "img_model_log/"
     TRAIN_LOG_DIR ="img_train_log/"
@@ -59,6 +62,7 @@ def test():
 
     try:
         pdCN_model = Weight_load(pdCN_model, MODEL_DIR + "pdCN.h5")
+
         print("load saved model done")
     except:
         print("No saved model")
@@ -73,21 +77,25 @@ def test():
         c = c+1
         ax = fig.add_subplot(rows, cols, c)
         mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
-        ax.imshow(mask_ax)
+        cv2.imshow("mask",mask_ax)
         cv2.imwrite(TRAIN_LOG_DIR + "img_mask_TEST_" + str(j) + ".jpg", mask_ax)
+        ax.imshow(mask_ax)
 
         c = c+1
         ax2 = fig.add_subplot(rows, cols, c)
         result_ax = cv2.cvtColor(np.uint8(result[j, :]), cv2.COLOR_BGR2RGB)
         cv2.imwrite(TRAIN_LOG_DIR + "img_result_TEST_" + str(j) + ".jpg", result_ax)
+        cv2.imshow("result",result_ax)
         ax2.imshow(result_ax)
 
         c = c+1
         ax3 = fig.add_subplot(rows, cols, c)
         raw_img_ax = cv2.cvtColor(np.uint8(raw_img[j, :]), cv2.COLOR_BGR2RGB)
         cv2.imwrite(TRAIN_LOG_DIR + "img_raw_TEST_" + str(j) + ".jpg", raw_img_ax)
+        cv2.imshow("raw",raw_img_ax)
         ax3.imshow(raw_img_ax)
 
+        cv2.waitKey(5000)
     #to check the training result
     plt.show()
         
