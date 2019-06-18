@@ -402,7 +402,7 @@ def Encoder(input_shape):
 
 import math
 
-def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7, 7), initial_pooling='max'):
+def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7, 7), initial_pooling='max',check_image_optflow = True):
 
     init_channel = int( (input_shape[0] / 4) )
     print(init_channel)
@@ -436,7 +436,14 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
         filters = int(filters / 2 )
     
     x = UpSampling2D()(x)
-    x = Conv2D(strides=1, filters=3, kernel_size= 3, padding='same')(x)
+    
+    if check_image_optflow:
+        # T => image
+        x = Conv2D(strides=1, filters=3, kernel_size= 3, padding='same')(x)
+    else:
+        # F => optflow
+        x = Conv2D(strides=1, filters=2, kernel_size= 3, padding='same')(x)
+
     x = Activation('tanh')(x)
 
     model = Model(inputs=input_node, outputs=x)
