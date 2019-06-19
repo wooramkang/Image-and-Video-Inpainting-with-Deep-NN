@@ -15,7 +15,6 @@ from DataWeight_load import *
 from pconv_Dilatedconv_model import *
 
 #img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, direction=True, with_origin_img=True)
-
 #masks T F boolean np-array
 
 def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize):
@@ -24,70 +23,60 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     
     height = image_shape[0]
     width = image_shape[1]
-    #completion_frames = np.zeros(shape=(batchsize, height, width, 2))
-    new_masks = np.ones(shape=(batchsize, height, width, 3))
-    #new_masks = masks
-    #print(masks[0])
-    for _ in range(batchsize):
-
-        for i in range(1, len(frames)-1):
-            for h in range(height):        
-                for w in range(width):
-                    if masks[i][h][w][0] == 1:
-                        new_h = int(h + flows_forward[i][h][w][1])
-                        new_w = int(w + flows_forward[i][h][w][0])
-
-                        if new_h >= height:
-                            continue
-                        if new_w >= width:
-                            continue
-                        if new_h < 0:
-                            continue
-                        if new_w < 0:
-                            continue
-                        if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
-                            continue
-                        if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
-                            continue
-
-                        frames[i-1][h][w] = frames[i][ new_h ][ new_w ]
-                        
-                        for t in range(3):
-                            new_masks[i][h][w][t] = 0
-
-        for i in range(len(frames) -1):
-            for h in range(height):        
-                for w in range(width):
-                    if masks[i][h][w][0] == 1:
-                        new_h = int(h + flows_backward[i][h][w][1])
-                        new_w = int(w + flows_backward[i][h][w][0])
-
-                        if new_h >= height:
-                            continue
-                        if new_w >= width:
-                            continue
-                        if new_h < 0:
-                            continue
-                        if new_w < 0:
-                            continue
-                        if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
-                            continue
-                        if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
-                            continue
-
-                        frames[i+1][h][w] = frames[i][ new_h ][ new_w ]
     
-    return frames, new_masks
-    '''
-    refine_masks = []
+    #for _ in range(2):
+    for i in range(1, len(frames)-1):
+        for h in range(height):        
+            for w in range(width):
+                if masks[i-1][h][w][0] == 0:
+                    new_h = int(h + flows_forward[i][h][w][0])
+                    new_w = int(w + flows_forward[i][h][w][1])
 
-    for i in range(len(masks)):
-        new_mask = deepcopy(masks[i])
-        
-        refine_masks.append(new_mask)
+                    if new_h >= height:
+                        continue
+                    if new_w >= width:
+                        continue
+                    if new_h < 0:
+                        continue
+                    if new_w < 0:
+                        continue
+                    if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
+                        continue
+                    if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
+                        continue
+
+                    frames[i-1][h][w] = frames[i][ new_h ][ new_w ] 
+                    
+                    for t in range(3):
+                        masks[i-1][h][w][t] = 255
+
+    for i in range(len(frames) -1):
+        for h in range(height):        
+            for w in range(width):
+                if masks[i+1][h][w][0] == 0:
+                    new_h = int(h + flows_backward[i][h][w][0])
+                    new_w = int(w + flows_backward[i][h][w][1])
+
+                    if new_h >= height:
+                        continue
+                    if new_w >= width:
+                        continue
+                    if new_h < 0:
+                        continue
+                    if new_w < 0:
+                        continue
+                    if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
+                        continue
+                    if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
+                        continue
+
+                    frames[i+1][h][w] = frames[i][ new_h ][ new_w ]
+                    
+                    for t in range(3):
+                        masks[i+1][h][w][t] = 255
     
-    return frames, np.array(refine_masks)
-    '''
+    return frames, masks
+
 def nn_guide_inpaint(frames, masks, frame_nn_model, batch_size):
     
     img_train_batch = image_normalization(frames)
@@ -107,10 +96,12 @@ def nn_guide_inpaint(frames, masks, frame_nn_model, batch_size):
 
 def inpainting_process( flows_forward, flows_backward, frames, masks, batchsize, nn_model):
     
-    frame_origin = frames
+    frame_origin = deepcopy(frames)
+    #masks_origin = deepcopy(masks)
+
     frames , masks = flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     flow_guide_frames, masked_frames, final_frames = nn_guide_inpaint(frames, masks, nn_model, batchsize)
-
+    
     #return flow_guide_frames, masked_frames, final_frames
     return frame_origin, frames, masks
     
