@@ -24,57 +24,93 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     height = image_shape[0]
     width = image_shape[1]
     
-    #for _ in range(2):
-    for i in range(1, len(frames)-1):
-        for h in range(height):        
-            for w in range(width):
-                if masks[i-1][h][w][0] == 0:
-                    new_h = int(h + flows_forward[i][h][w][0])
-                    new_w = int(w + flows_forward[i][h][w][1])
+    for _ in range( 2 ):
 
-                    if new_h >= height:
-                        continue
-                    if new_w >= width:
-                        continue
-                    if new_h < 0:
-                        continue
-                    if new_w < 0:
-                        continue
-                    if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
-                        continue
-                    if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
-                        continue
+        for i in range(1, len(frames)-2):
+            for h in range(height):        
+                for w in range(width):
+                    if masks[i-1][h][w][0] == 0:
 
-                    frames[i-1][h][w] = frames[i][ new_h ][ new_w ] 
-                    
-                    for t in range(3):
-                        masks[i-1][h][w][t] = 255
+                        new_h = int(h - flows_forward[i][h][w][0])
+                        new_w = int(w - flows_forward[i][h][w][1])
+                        
+                        if new_h >= height:
+                            continue
+                        if new_w >= width:
+                            continue
+                        if new_h < 0:
+                            continue
+                        if new_w < 0:
+                            continue
 
-    for i in range(len(frames) -1):
-        for h in range(height):        
-            for w in range(width):
-                if masks[i+1][h][w][0] == 0:
-                    new_h = int(h + flows_backward[i][h][w][0])
-                    new_w = int(w + flows_backward[i][h][w][1])
+                        next_h = int(h - flows_forward[i][h][w][0] - flows_forward[i+1][h][w][0])
+                        next_w = int(w - flows_forward[i][h][w][1] - flows_forward[i+1][h][w][1])
 
-                    if new_h >= height:
-                        continue
-                    if new_w >= width:
-                        continue
-                    if new_h < 0:
-                        continue
-                    if new_w < 0:
-                        continue
-                    if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
-                        continue
-                    if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
-                        continue
+                        if next_h >= height:
+                            continue
+                        if next_w >= width:
+                            continue
+                        if next_h < 0:
+                            continue
+                        if next_w < 0:
+                            continue
 
-                    frames[i+1][h][w] = frames[i][ new_h ][ new_w ]
-                    
-                    for t in range(3):
-                        masks[i+1][h][w][t] = 255
-    
+                        # frame k-1   <===>   frame k     <====>      frame k+1
+                        if frames[i][new_h][new_w][0] != frames[i+1][next_h][next_w][0]:
+                            continue
+
+                        if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
+                            continue
+                        if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
+                            continue
+
+                        frames[i-1][h][w] = frames[i][ new_h ][ new_w ] 
+                        
+                        for t in range(3):
+                            masks[i-1][h][w][t] = 1
+
+        for i in range(len(frames) -2):
+            for h in range(height):        
+                for w in range(width):
+                    if masks[i+1][h][w][0] == 0:
+
+                        new_h = int(h - flows_backward[i][h][w][0])
+                        new_w = int(w - flows_backward[i][h][w][1])
+
+                        if new_h >= height:
+                            continue
+                        if new_w >= width:
+                            continue
+                        if new_h < 0:
+                            continue
+                        if new_w < 0:
+                            continue
+
+                        next_h = int(h - flows_backward[i][h][w][0] - flows_backward[i+1][h][w][0])
+                        next_w = int(w - flows_backward[i][h][w][1] - flows_backward[i+1][h][w][1])
+
+                        if next_h >= height:
+                            continue
+                        if next_w >= width:
+                            continue
+                        if next_h < 0:
+                            continue
+                        if next_w < 0:
+                            continue
+
+                        if frames[i][new_h][new_w][0] != frames[i-1][next_h][next_w][0]:
+                            continue
+                            
+                        if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
+                            continue
+                        if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
+                            continue
+
+                        frames[i+1][h][w] = frames[i][ new_h ][ new_w ]
+                        
+                        for t in range(3):
+                            masks[i+1][h][w][t] = 1
+        
     return frames, masks
 
 def nn_guide_inpaint(frames, masks, frame_nn_model, batch_size):
@@ -102,6 +138,7 @@ def inpainting_process( flows_forward, flows_backward, frames, masks, batchsize,
     frames , masks = flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     flow_guide_frames, masked_frames, final_frames = nn_guide_inpaint(frames, masks, nn_model, batchsize)
     
-    #return flow_guide_frames, masked_frames, final_frames
+    masks = image_to_origin(masks)
+
     return frame_origin, frames, masks
     

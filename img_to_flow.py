@@ -67,17 +67,7 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         resize_ori_images = []    
 
         for p in frame_stream:
-            '''
-            resize_image = np.zeros(shape=(height, width, 3))
-            
-            for H in range(height):
-                n_hei = int( H * ori_h/height )
-                for W in range(width):
-                    n_wid = int( W * ori_w/width )
-                    resize_image[H][W] = p[n_hei][n_wid]
 
-            resize_ori_images.append(resize_image)
-            '''
             resize_ori_images.append(cv2.resize(p, (width, height) ))
         
         resize_optflow = []
@@ -100,13 +90,7 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         resize_optflow = np.array(resize_optflow)
         
         #display_img_pairs_w_flows(img_pairs, pred_labels)
-        '''
-        flows_img = []
-        for i in range(len(pred_labels)):
-            flows_img.append(flow_to_img(pred_labels[i], flow_mag_max=None))
 
-        return pred_labels, flows_img
-        '''
     else:
         resize_optflow = pred_labels
         resize_ori_images = frame_stream

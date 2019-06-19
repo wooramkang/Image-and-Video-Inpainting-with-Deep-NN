@@ -5,9 +5,9 @@ from pconv_Dilatedconv_model import *
 from flow_guide_frame_inpainting import inpainting_process
 from img_to_flow import img_to_optflow
 
-def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
+def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size):
     batch_size = BATCH_SIZE
-    random_sample_size = 10000
+    random_sample_size = 20000
     
     for i in range(randint(0, random_sample_size)):
         next(train_dataloader)
@@ -15,8 +15,8 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
     #img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
     img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, False) )
     
-    _, flows_forward = img_to_optflow(img_train_batch, batch_size, 512, 512,direction=True, with_resizing = True)
-    img_train_batch, flows_backward = img_to_optflow(img_train_batch, batch_size, 512, 512, direction=False, with_resizing = True)
+    _, flows_forward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=True, with_resizing = True)
+    img_train_batch, flows_backward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=False, with_resizing = True)
 
     #IMAGE BATCH
     mask_batch = np.array(mask_to_one_batch(mask_loader, batch_size))
@@ -29,7 +29,7 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE):
     return flow_guide_frames, masked_frames, final_framses
 
 def test():
-    BATCH_SIZE = 8
+    BATCH_SIZE = 12
     LEARN_RATE = 0.001
     MODEL_DIR = "img_model_log/"
     TRAIN_LOG_DIR ="img_train_log/"
@@ -42,18 +42,17 @@ def test():
 
     if img_shape is None:
         img_shape = (512, 512, 3)
-        print("###")
-        print(img_shape)
-        print("###")
     
+    img_shape = (436,1024, 3)
+
     global pdCN_model
     pdCN_model = None
 
-    if (img_shape[0] > 512 and img_shape[1] > 512):
+    if img_shape[0] > 512 or img_shape[1] > 512:
         mask_loader = MaskGenerator(img_shape[0], img_shape[1])#._generate_mask()
         train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
-        train_dataloader_forward = data_batch_loader_forward(train_data)
-        pdCN_model = pdCN_network_generate(data_shape= img_shape, sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE)    
+        train_dataloader_forward = data_batch_loader_forward(train_data, (img_shape[0], img_shape[1])  )
+        #pdCN_model = pdCN_network_generate(data_shape= img_shape, sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE)    
     else:
         mask_loader = MaskGenerator(512, 512)#._generate_mask()
         train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
@@ -67,7 +66,7 @@ def test():
     except:
         print("No saved model")
     
-    masked_in, result, raw_img = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE)   
+    masked_in, result, raw_img = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape)   
     fig = plt.figure()
     rows = BATCH_SIZE
     cols = 3
