@@ -4,30 +4,34 @@ import matplotlib.pyplot as plt
 from pconv_Dilatedconv_model import *
 from flow_guide_frame_inpainting import inpainting_process
 from img_to_flow import img_to_optflow
+from copy import deepcopy
 
-def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size):
+def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinpaint_size):
     batch_size = BATCH_SIZE
-    random_sample_size = 10000
+    random_sample_size = 30000
     
     for i in range(randint(0, random_sample_size)):
         next(train_dataloader)
 
-    #img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
-    img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, False) )
-
-    _, flows_forward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=True, with_resizing = True)
-    img_train_batch, flows_backward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=False, with_resizing = True)
-
-    #IMAGE BATCH
+    img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, with_normalizing=False) )
     mask_batch = np.array(mask_to_one_batch(mask_loader, batch_size))
     img_masked_batch = np.array(image_masking(img_train_batch, mask_batch) )
-    
-    flow_guide_frames, masked_frames, final_framses = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size)
+    raw_masked_batch = deepcopy(img_masked_batch)
 
-    return flow_guide_frames, masked_frames, final_framses
+    for i in range(reinpaint_size):
+        _, flows_forward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=True, with_resizing = True)
+        img_train_batch, flows_backward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=False, with_resizing = True)
+        
+        _, final_frames, masked_frames = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size)
+        img_train_batch = final_frames
+        mask_batch = masked_frames
+
+    return raw_masked_batch, final_frames, mask_to_origin(masked_frames)
 
 def test():
     BATCH_SIZE = 8
+    reinpaint_size = 3
+    # to re-inpaint more than 3 is meanningless
     TRAIN_LOG_DIR ="img_train_log/"
 
     global train_log
@@ -39,13 +43,13 @@ def test():
     if img_shape is None:
         img_shape = (512, 512, 3)
     
-    #img_shape = (436,1024, 3)
+    #img_shape = (1024, 436, 3)
 
     mask_loader = MaskGenerator(img_shape[0], img_shape[1])#._generate_mask()
-    train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
+    train_data, _ = Data_split(raw_data, train_test_ratio = 0.8)
     train_dataloader_forward = data_batch_loader_forward(train_data, (img_shape[0], img_shape[1])  )
 
-    masked_in, result, raw_img = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape)   
+    raw_img, result, masked_in= test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape, reinpaint_size)   
     fig = plt.figure()
     rows = BATCH_SIZE
     cols = 3

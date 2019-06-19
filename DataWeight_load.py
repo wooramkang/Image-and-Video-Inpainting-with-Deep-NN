@@ -314,6 +314,14 @@ def image_to_origin(image_batch):
     #image_batch = np.transpose(image_batch, (0, 3, 1, 2))
     return image_batch
 
+def mask_normalization(image_batch):
+    image_batch = np.divide(image_batch, 255)
+    return image_batch
+
+def mask_to_origin(image_batch):
+    image_batch = np.multiply(image_batch, 255)
+    return image_batch
+
 def image_to_half_size(image_batch):
     shape = image_batch[0].shape
     new_image_batch = []
