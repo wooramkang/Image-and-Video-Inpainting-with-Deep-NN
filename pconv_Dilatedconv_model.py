@@ -263,18 +263,17 @@ def pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net
 
     pdCN = P_D_model(input_frame= input_frame, input_mask = input_mask, frame_size=data_shape, sampling_frame=sampling_frame, frame_net_mid_depth =frame_net_mid_depth)
     pdCN_model = Model([input_frame, input_mask], pdCN)
-    pdCN_model.summary()
     
     # custom loss to learn better
     #pdCN_model.compile(optimizer=optimizer_pdCN, loss=loss_func(input_frame, input_mask) )
-
     pdCN_model.compile(optimizer=optimizer_pdCN, loss={'final_output' : 'mae'})
     
-
     return pdCN_model
 
 
 if __name__ == "__main__":
-    pdCN_network_generate()
+    
+    nn_model=pdCN_network_generate()
+    nn_model.summary()
     
     
