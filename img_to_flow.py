@@ -74,12 +74,14 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         
         resize_optflow = []
 
+        resize_optflow = flow_resize(pred_labels, (height, width)  )
+        '''
+        # need to check diff between auto_resize & manual's
+        
         opt_h = p.shape[0]
         opt_w = p.shape[1]
         
         #print( (height, width) )
-        resize_optflow = flow_resize(pred_labels, (height, width)  )
-        '''
         for p in pred_labels:
             resize_image = np.zeros(shape=(height, width, 2))
 
@@ -94,6 +96,7 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         '''
         resize_ori_images = np.array(resize_ori_images)
         resize_optflow = np.array(resize_optflow)        
+
         #display_img_pairs_w_flows(img_pairs, pred_labels)
 
     else:
@@ -101,8 +104,6 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         resize_ori_images = frame_stream
 
     return resize_ori_images, resize_optflow
-    #return pred_labels
-
 
 #for test of optflow estim
 if __name__ == "__main__":

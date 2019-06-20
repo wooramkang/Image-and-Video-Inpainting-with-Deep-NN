@@ -4,16 +4,18 @@ import matplotlib.pyplot as plt
 from pconv_Dilatedconv_model import *
 from flow_guide_frame_inpainting import inpainting_process
 from img_to_flow import img_to_optflow
-from copy import deepcopy
 
 def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinpaint_size):
     batch_size = BATCH_SIZE
-    random_sample_size = 30000
+    random_sample_size = 10000
     
     for i in range(randint(0, random_sample_size)):
         next(train_dataloader)
 
-    img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, with_normalizing=False) )
+    #img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
+    img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, False) )
+
+    #IMAGE BATCH
     mask_batch = np.array(mask_to_one_batch(mask_loader, batch_size))
     img_masked_batch = np.array(image_masking(img_train_batch, mask_batch) )
     raw_masked_batch = deepcopy(img_masked_batch)
@@ -29,9 +31,11 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinp
     return raw_masked_batch, final_frames, mask_to_origin(masked_frames)
 
 def test():
+
     BATCH_SIZE = 5
-    reinpaint_size = 2
+    reinpaint_size = 1
     # to re-inpaint more than 3 is meanningless
+
     TRAIN_LOG_DIR ="img_train_log/"
 
     global train_log
@@ -43,13 +47,13 @@ def test():
     if img_shape is None:
         img_shape = (512, 512, 3)
     
-    #img_shape = (1024, 436, 3)
+    #img_shape = (436,1024, 3) # default_size of flow_nn model input
 
     mask_loader = MaskGenerator(img_shape[0], img_shape[1])#._generate_mask()
-    train_data, _ = Data_split(raw_data, train_test_ratio = 0.8)
+    train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
     train_dataloader_forward = data_batch_loader_forward(train_data, (img_shape[0], img_shape[1])  )
 
-    raw_img, result, masked_in= test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape, reinpaint_size)   
+    raw_img, masked_in, result = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape, reinpaint_size)   
     fig = plt.figure()
     rows = BATCH_SIZE
     cols = 3
