@@ -19,18 +19,18 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinp
     raw_masked_batch = deepcopy(img_masked_batch)
 
     for i in range(reinpaint_size):
-        _, flows_forward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=True, with_resizing = True)
-        img_train_batch, flows_backward = img_to_optflow(img_train_batch, batch_size, target_size[0], target_size[1], direction=False, with_resizing = True)
+        _, flows_forward = img_to_optflow(img_masked_batch, batch_size, target_size[0], target_size[1], direction=True, with_resizing = True)
+        img_masked_batch, flows_backward = img_to_optflow(img_masked_batch, batch_size, target_size[0], target_size[1], direction=False, with_resizing = True)
         
         _, final_frames, masked_frames = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size)
-        img_train_batch = final_frames
+        img_masked_batch = final_frames
         mask_batch = masked_frames
 
     return raw_masked_batch, final_frames, mask_to_origin(masked_frames)
 
 def test():
-    BATCH_SIZE = 8
-    reinpaint_size = 3
+    BATCH_SIZE = 5
+    reinpaint_size = 2
     # to re-inpaint more than 3 is meanningless
     TRAIN_LOG_DIR ="img_train_log/"
 

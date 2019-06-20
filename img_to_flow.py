@@ -11,6 +11,7 @@ import cv2
 from opticalflow.model_pwcnet import ModelPWCNet, _DEFAULT_PWCNET_TEST_OPTIONS
 from opticalflow.visualize import display_img_pairs_w_flows
 from opticalflow.optflow import flow_to_img
+from DataWeight_load import *
 
 # Build a list of image pairs to process
 
@@ -18,21 +19,23 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
     
     img_pairs = []
     t_frames = []
+
     for i in range(batchsize):
         t_frames.append( cv2.resize(frame_stream[i], (1024, 436) ) )
-    
     frame_stream = np.array(t_frames)
+
+    #cv2.imshow("for_checking", frame_stream[1])
+    #cv2.waitKey(3000)
 
     if direction:
         for i in range(batchsize-1):
-            #frame_stream[i] = 
-            #frame_stream[i+1] = 
             img_pairs.append( (frame_stream[i], frame_stream[i+1]) )
     else:
         for i in range(batchsize-1):
-            #frame_stream[batchsize - (i+1)] = cv2.resize(frame_stream[batchsize - (i+1)], (1024, 436)  )
-            #frame_stream[batchsize - (i+2)] = cv2.resize(frame_stream[batchsize - (i+2)], (1024, 436)  )
             img_pairs.append( (frame_stream[ batchsize - (i+1) ], frame_stream[ batchsize - (i+2) ]) )
+
+    #cv2.imshow("for_checking_1", img_pairs[1][0])
+    #cv2.waitKey(3000)
 
     gpu_devices = ['/device:GPU:0']  
     controller = '/device:GPU:0'
@@ -67,13 +70,16 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         resize_ori_images = []    
 
         for p in frame_stream:
-
             resize_ori_images.append(cv2.resize(p, (width, height) ))
         
         resize_optflow = []
+
         opt_h = p.shape[0]
         opt_w = p.shape[1]
+        
         #print( (height, width) )
+        resize_optflow = flow_resize(pred_labels, (height, width)  )
+        '''
         for p in pred_labels:
             resize_image = np.zeros(shape=(height, width, 2))
 
@@ -85,10 +91,9 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
                     resize_image[H][W] = p[n_hei][n_wid]
 
             resize_optflow.append(resize_image)
-
+        '''
         resize_ori_images = np.array(resize_ori_images)
-        resize_optflow = np.array(resize_optflow)
-        
+        resize_optflow = np.array(resize_optflow)        
         #display_img_pairs_w_flows(img_pairs, pred_labels)
 
     else:
@@ -107,10 +112,3 @@ if __name__ == "__main__":
     frames = np.array(frames)
     
     ori, opt = img_to_optflow(frames, 2,  target_hei =400, target_wid = 1000, direction = False)
-    #print(opt.shape)
-    '''
-    cv2.imshow("w1", ori[0])
-    cv2.imshow("w2", ori[1])
-    cv2.imshow("w3", flow_to_img(opt[0], flow_mag_max=None))
-    cv2.waitKey(5000)
-    '''

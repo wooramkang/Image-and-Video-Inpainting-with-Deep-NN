@@ -170,7 +170,6 @@ def flow_loader(flow_dir=None, ):
         for name_son in folders_son:        
             folder_property = name_son.split('_')
     
-            
             for file in glob.glob(image_dir + name + "/" + name_son + "/*"):
                 #LOAD IMG i,  IMG i+1,  FLOW(file)
                 print("XXX")
@@ -315,12 +314,82 @@ def image_to_origin(image_batch):
     return image_batch
 
 def mask_normalization(image_batch):
-    image_batch = np.divide(image_batch, 255)
+    image_batch = image_batch / 255 #np.divide(image_batch, 255)
     return image_batch
 
 def mask_to_origin(image_batch):
-    image_batch = np.multiply(image_batch, 255)
+    image_batch = image_batch * 255 #np.multiply(image_batch, 255)
     return image_batch
+
+def flow_resize(mask_batch, target_size):
+    
+    #mask_batch = 
+    mask_size = (mask_batch[0].shape[0] , mask_batch[0].shape[1] )
+    print(mask_size)
+    target_batch = []
+
+    if mask_size == target_size:
+        return mask_batch
+
+    for i in range( len(mask_batch) ):
+        mask = np.zeros( (mask_size[0], mask_size[1], 3), dtype=np.uint8 )
+        target_mask = np.zeros( (target_size[0], target_size[1], 2 ), dtype=np.uint8 )
+        
+        for h in range( mask_size[0] ):
+            for w in range( mask_size[1] ):
+                mask[h][w][0] = mask_batch[i][h][w][0]
+                mask[h][w][1] = mask_batch[i][h][w][1]
+                mask[h][w][2] = mask_batch[i][h][w][1]
+
+        mask = cv2.resize( mask , target_size)
+        
+        for h in range( target_size[0] ):
+            for w in range( target_size[1] ):
+                target_mask[h][w][0] = mask[h][w][0]
+                target_mask[h][w][1] = mask[h][w][1]
+        
+        target_batch.append(target_mask)
+
+    return np.array(target_batch)
+
+def mask_resize(mask_batch, target_size):
+    
+    #mask_batch = 
+    mask_size = (mask_batch[0].shape[0] , mask_batch[0].shape[1] )
+    print(mask_size)
+
+    target_batch = []
+    
+    if mask_size == target_size:
+        return mask_batch
+
+    for i in range( len(mask_batch) ):
+        mask = np.zeros( (mask_size[0], mask_size[1], 3), dtype=np.uint8 )
+        target_mask = np.zeros( (mask_size[0], mask_size[1], 3), dtype=np.uint8 )
+        
+        for h in range( mask_size[0] ):
+            for w in range( mask_size[1] ):
+                if mask_batch[i][h][w][0] != 0:
+                    mask[h][w][0] = 1
+                if mask_batch[i][h][w][1] != 0:
+                    mask[h][w][1] = 1
+                if mask_batch[i][h][w][2] != 0:
+                    mask[h][w][2] = 1
+
+        temp_mask = deepcopy(cv2.resize( mask , target_size))
+        
+        for h in range( target_size[0] ):
+            for w in range( target_size[1] ):
+                if temp_mask[h][w][0] != 0:
+                    target_mask[h][w][0] = 1
+                if temp_mask[h][w][1] != 0:
+                    target_mask[h][w][1] = 1
+                if temp_mask[h][w][2] != 0:
+                    target_mask[h][w][2] = 1
+
+        target_batch.append(target_mask)
+
+    return np.array(target_batch)
 
 def image_to_half_size(image_batch):
     shape = image_batch[0].shape

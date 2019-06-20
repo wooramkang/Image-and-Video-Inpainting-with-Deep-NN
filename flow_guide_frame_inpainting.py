@@ -14,6 +14,8 @@ import img_to_flow
 from DataWeight_load import *
 from pconv_Dilatedconv_model import *
 
+from pconv_model import PConvUnet
+
 def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize):
 
     image_shape = frames[0].shape
@@ -21,17 +23,22 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     height = image_shape[0]
     width = image_shape[1]
     count = 0
-    for i in range(1, len(frames)-2):
+    end_of_frame_arr = len(frames)-1
+    #print(end_of_frame_arr)
+
+    for i in range(1, end_of_frame_arr):
+        
         for h in range(height):        
             for w in range(width):
-                if masks[i-1][h][w][0] == 0:
 
-                    new_h = int(h - flows_forward[i][h][w][0])
-                    new_w = int(w - flows_forward[i][h][w][1])
+                if masks[i][h][w][0] == 0:
+        
+                    new_h = int(h - flows_forward[i - 1][h][w][0])
+                    new_w = int(w - flows_forward[i - 1][h][w][1])
                     
-                    if (h - flows_forward[i][h][w][0]) - new_h > 0.5:
+                    if (h - flows_forward[ i - 1 ][h][w][0]) - new_h > 0.5:
                         new_h = new_h +1
-                    if (w - flows_forward[i][h][w][1]) - new_w > 0.5:
+                    if (w - flows_forward[ i - 1 ][h][w][1]) - new_w > 0.5:
                         new_w = new_w +1
 
                     if new_h >= height:
@@ -43,53 +50,55 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                     if new_w < 0:
                         continue
 
-                    next_h = int(new_h - flows_forward[i+1][h][w][0])
-                    next_w = int(new_w - flows_forward[i+1][h][w][1])
+                    prev_h = int(h - flows_backward[ end_of_frame_arr - (i + 1) ][h][w][0])
+                    prev_w = int(w - flows_backward[ end_of_frame_arr - (i + 1) ][h][w][1])
 
-                    if (new_h - flows_forward[i+1][h][w][0]) - next_h > 0.5:
-                        next_h = next_h + 1
-                    if (new_w - flows_forward[i+1][h][w][1]) - next_w > 0.5:
-                        next_w = next_w + 1
+                    if (prev_h - flows_backward[(end_of_frame_arr - 1) - (i + 1)][h][w][0]) - prev_h > 0.5:
+                        prev_h = prev_h + 1
+                    if (prev_w - flows_backward[(end_of_frame_arr - 1) - (i + 1)][h][w][1]) - prev_w > 0.5:
+                        prev_w = prev_w + 1
 
-                    if next_h >= height:
+                    if prev_h >= height:
                         continue
-                    if next_w >= width:
+                    if prev_w >= width:
                         continue
-                    if next_h < 0:
+                    if prev_h < 0:
                         continue
-                    if next_w < 0:
+                    if prev_w < 0:
                         continue
 
                     # frame k-1   <===>   frame k     <====>      frame k+1
-                    if frames[i][new_h][new_w][0] != frames[i+1][next_h][next_w][0]:
+                    if frames[i - 1][new_h][new_w][0] != frames[i + 1][prev_h][prev_w][0]:
                         continue
 
-                    if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
+                    if masks[i - 1][ new_h ][ new_w ][0] == 0:
                         continue
-                    if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
+                        
+                    if masks[i + 1][ prev_h ][ prev_w ][0] == 0:
                         continue
-
-                    frames[i-1][h][w] = frames[i][ new_h ][ new_w ] 
                     
+                    frames[i][h][w] = frames[i - 1][ new_h ][ new_w ] 
                     count = count + 1
 
                     for t in range(3):
-                        masks[i-1][h][w][t] = 1
+                        masks[i][h][w][t] = 1
+
     print("times of flow guide inpainting _ forward")
     print(count)
-    count = 0
 
-    for i in range(len(frames) -2):
+    for i in range(end_of_frame_arr - 1 , 0, -1):
+        
         for h in range(height):        
             for w in range(width):
-                if masks[i+1][h][w][0] == 0:
 
-                    new_h = int(h - flows_backward[i][h][w][0])
-                    new_w = int(w - flows_backward[i][h][w][1])
-
-                    if (h - flows_backward[i][h][w][0]) - new_h > 0.5:
+                if masks[i][h][w][0] == 0:
+        
+                    new_h = int(h + flows_forward[i ][h][w][0])
+                    new_w = int(w + flows_forward[i ][h][w][1])
+                    
+                    if (h + flows_forward[ i ][h][w][0]) - new_h > 0.5:
                         new_h = new_h +1
-                    if (w - flows_backward[i][h][w][1]) - new_w > 0.5:
+                    if (w + flows_forward[ i ][h][w][1]) - new_w > 0.5:
                         new_w = new_w +1
 
                     if new_h >= height:
@@ -101,35 +110,38 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                     if new_w < 0:
                         continue
 
-                    next_h = int(new_h - flows_backward[i+1][h][w][0])
-                    next_w = int(new_w - flows_backward[i+1][h][w][1])
-                    
-                    if (new_h - flows_backward[i+1][h][w][0]) - next_h > 0.5:
-                        next_h = next_h + 1
-                    if (new_w - flows_backward[i+1][h][w][1]) - next_w > 0.5:
-                        next_w = next_w + 1
+                    prev_h = int(h + flows_backward[ end_of_frame_arr - (i ) ][h][w][0])
+                    prev_w = int(w + flows_backward[ end_of_frame_arr - (i ) ][h][w][1])
 
-                    if next_h >= height:
+                    if (prev_h + flows_backward[(end_of_frame_arr - 1) - (i )][h][w][0]) - prev_h > 0.5:
+                        prev_h = prev_h + 1
+                    if (prev_w + flows_backward[(end_of_frame_arr - 1) - (i )][h][w][1]) - prev_w > 0.5:
+                        prev_w = prev_w + 1
+
+                    if prev_h >= height:
                         continue
-                    if next_w >= width:
+                    if prev_w >= width:
                         continue
-                    if next_h < 0:
+                    if prev_h < 0:
                         continue
-                    if next_w < 0:
+                    if prev_w < 0:
                         continue
 
-                    if frames[i][new_h][new_w][0] != frames[i-1][next_h][next_w][0]:
+                    # frame k-1   <===>   frame k     <====>      frame k+1
+                    if frames[i + 1][new_h][new_w][0] != frames[i - 1][prev_h][prev_w][0]:
+                        continue
+
+                    if masks[i + 1][ new_h ][ new_w ][0] == 0:
                         continue
                         
-                    if frames[i][ new_h ][ new_w ][0] == 255 and frames[i][ new_h ][ new_w ][1] == 255 and frames[i][ new_h ][ new_w ][2] == 255:
+                    if masks[i - 1][ prev_h ][ prev_w ][0] == 0:
                         continue
-                    if frames[i][ new_h ][ new_w ][0] == 0 and frames[i][ new_h ][ new_w ][2] == 0 and frames[i][ new_h ][ new_w ][2] == 0:
-                        continue
-
-                    frames[i+1][h][w] = frames[i][ new_h ][ new_w ]
+                    
+                    frames[i][h][w] = frames[i + 1][ new_h ][ new_w ] 
                     count = count + 1
+
                     for t in range(3):
-                        masks[i+1][h][w][t] = 1
+                        masks[i][h][w][t] = 1
 
     print("times of flow guide inpainting _ backward")
     print(count)
@@ -138,54 +150,73 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
 
 def nn_guide_inpaint(frames, masks, batch_size):
 
-    LEARN_RATE = 0.001
     img_shape = ( frames[0].shape[0], frames[0].shape[1], 3)
-    mask_batch = mask_to_origin(masks)
     
     t_frames = []
-    t_masks = []
-    
     for i in range(len(frames)):
-        t_frames.append( cv2.resize( frames[i], (512, 512)   ))
-        t_masks.append( cv2.resize( mask_batch[i], (512, 512)   ))
-    
+        t_frames.append( cv2.resize( frames[i], (512, 512) ))
     t_frames = np.array(t_frames)
-    t_masks = np.array(t_masks)
 
-    mask_batch = mask_normalization(t_masks)    
-    img_train_batch = image_normalization(t_frames)
+    img_train_batch = mask_normalization(t_frames)
+    mask_batch = mask_resize(masks, (512, 512) )
 
     with keras.backend.get_session().graph.as_default():
-        try:
-            nn_model = pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE) 
-            MODEL_DIR = "img_model_log/"
-            nn_model.load_weights(MODEL_DIR + "pdCN.h5")
-            #nn_model = Weight_load(nn_model, )
-            print("load saved model done")
-            model_result = nn_model.predict_on_batch (  [img_train_batch, mask_batch ] )
-            print("completion done")
-        except:
-            model_result = img_train_batch
-            print("No saved model")
+        #try:
+        '''
+        # my custom img inpaint model need more training
 
-        img_train_batch = image_to_origin(img_train_batch)
-        mask_batch = mask_to_origin(mask_batch)
-        model_result = image_to_origin(model_result)
+        LEARN_RATE = 0.001
+        nn_model = pdCN_network_generate(data_shape= (512, 512, 3), sampling_frame=8, frame_net_mid_depth=4, learn_rate = LEARN_RATE) 
+        MODEL_DIR = "img_model_log/"
+        nn_model.load_weights(MODEL_DIR + "pdCN.h5")
+        #nn_model = Weight_load(nn_model, )
+        print("load saved model done")
+        model_result = nn_model.predict_on_batch (  [img_train_batch, mask_batch ] )
+        print("completion done")
+        
+        #img_train_batch = image_to_origin(img_train_batch)
+        #mask_batch = mask_to_origin(mask_batch)
+        #model_result = image_to_origin(model_result)
+        '''
+
+        # from https://github.com/MathiasGruber/PConv-Keras
+        nn_model = PConvUnet(vgg_weights='img_model_log/vgg16.h5')
+        nn_model.load('img_model_log/pconv_model.h5')
+        print("load saved model done")
+        chunk_img = deepcopy(img_train_batch)
+        chunk_mask = deepcopy(mask_batch)
+        model_result = nn_model.predict_on_batch( [chunk_img, chunk_mask ] )
+        print("completion done")
+            
+        #except:
+            #model_result = img_train_batch
+            #print("No saved model")
+
+    img_train_batch = mask_to_origin(chunk_img)
+    
+    print(model_result)
+    model_result = mask_to_origin(model_result)    
+    print(model_result)
 
     t_frames = []
-    t_masks = []
     t_results = []
 
-    for i in range(len(frames)):
+    for i in range(len(model_result)):
         t_frames.append( cv2.resize( img_train_batch[i], (img_shape[1], img_shape[0])   ))
-        t_masks.append( cv2.resize( mask_batch[i], (img_shape[1], img_shape[0])   ))
         t_results.append( cv2.resize( model_result[i], (img_shape[1], img_shape[0])   ))
-    
-    t_frames = np.array(t_frames)
-    t_masks = np.array(t_masks)
-    t_results = np.array(t_results)
 
-    return t_frames, t_results, t_masks
+    t_frames = np.array(t_frames)
+    t_results = np.array(t_results)
+    
+    #cv2.imshow('frame', t_frames[1])
+    #cv2.imshow('result_frame', t_results[1])
+    #cv2.waitKey(3000)
+    
+    print(mask_batch)
+    mask_batch = mask_resize(mask_batch, (img_shape[1], img_shape[0]))
+    print(mask_batch)
+
+    return t_frames, t_results, mask_batch
 
 
 def inpainting_process( flows_forward, flows_backward, frames, masks, batchsize):
@@ -206,19 +237,6 @@ def inpainting_process( flows_forward, flows_backward, frames, masks, batchsize)
     flow_guide_frames, final_frames,  masked_frames = nn_guide_inpaint(frames, masks, batchsize)
     print("nn base inpainting done")
     print("")
-    
-    
-    masks = mask_normalization(masked_frames)
-    
-    for i in range(len(masks)):
-        for h in range(masks[0].shape[0]):
-            for w in range(masks[0].shape[1]):
-                for c in range(3):
-                    if masks[i][h][w][c] < 1:
-                        masks[i][h][w][c] = 0
-
-    masked_frames = masks
-    
     
     return flow_guide_frames, final_frames, masked_frames
     
