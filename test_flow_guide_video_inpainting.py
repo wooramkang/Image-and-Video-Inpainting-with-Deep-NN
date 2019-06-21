@@ -33,7 +33,7 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinp
 def test():
 
     BATCH_SIZE = 5
-    reinpaint_size = 1
+    reinpaint_size = 2
     # to re-inpaint more than 3 is meanningless
 
     TRAIN_LOG_DIR ="img_train_log/"
@@ -53,7 +53,7 @@ def test():
     train_data, val_data = Data_split(raw_data, train_test_ratio = 0.8)
     train_dataloader_forward = data_batch_loader_forward(train_data, (img_shape[0], img_shape[1])  )
 
-    raw_img, masked_in, result = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape, reinpaint_size)   
+    raw_img, result, masked_in = test_one_epoch(mask_loader, train_dataloader_forward,  BATCH_SIZE, img_shape, reinpaint_size)   
     fig = plt.figure()
     rows = BATCH_SIZE
     cols = 3
@@ -62,7 +62,7 @@ def test():
     for j in range(BATCH_SIZE):
         c = c+1
         ax = fig.add_subplot(rows, cols, c)
-        mask_ax =cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
+        mask_ax = cv2.cvtColor(np.uint8(masked_in[j, :]), cv2.COLOR_BGR2RGB) 
         cv2.imshow("mask",mask_ax)
         cv2.imwrite(TRAIN_LOG_DIR + "img_mask_TEST_" + str(j) + ".jpg", mask_ax)
         ax.imshow(mask_ax)

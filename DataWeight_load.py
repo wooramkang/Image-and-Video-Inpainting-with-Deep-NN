@@ -325,7 +325,7 @@ def flow_resize(mask_batch, target_size):
     
     #mask_batch = 
     mask_size = (mask_batch[0].shape[0] , mask_batch[0].shape[1] )
-    print(mask_size)
+    #print(mask_size)
     target_batch = []
 
     if mask_size == target_size:
@@ -356,7 +356,7 @@ def mask_resize(mask_batch, target_size):
     
     #mask_batch = 
     mask_size = (mask_batch[0].shape[0] , mask_batch[0].shape[1] )
-    print(mask_size)
+    #print(mask_size)
 
     target_batch = []
     
@@ -371,8 +371,10 @@ def mask_resize(mask_batch, target_size):
             for w in range( mask_size[1] ):
                 if mask_batch[i][h][w][0] != 0:
                     mask[h][w][0] = 1
+
                 if mask_batch[i][h][w][1] != 0:
                     mask[h][w][1] = 1
+
                 if mask_batch[i][h][w][2] != 0:
                     mask[h][w][2] = 1
 
@@ -382,8 +384,10 @@ def mask_resize(mask_batch, target_size):
             for w in range( target_size[1] ):
                 if temp_mask[h][w][0] != 0:
                     target_mask[h][w][0] = 1
+
                 if temp_mask[h][w][1] != 0:
                     target_mask[h][w][1] = 1
+
                 if temp_mask[h][w][2] != 0:
                     target_mask[h][w][2] = 1
 
@@ -402,7 +406,6 @@ def image_to_half_size(image_batch):
 
 def flow_to_image(prev_image = None, flow = None):
     covered_img = None
-
 
 
     return covered_img

@@ -404,29 +404,35 @@ import math
 
 def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7, 7), initial_pooling='max',check_image_optflow = True):
 
-    init_channel = int( (input_shape[0] / 4) )
+    if target_shape[0] < 1024:
+        crit_channel = 2048
+    else:
+        crit_channel = 4096
+        
+    init_channel = int( (input_shape[0] ) )
     print(init_channel)
 
     input_node = Input(shape = input_shape )
 
-    x = Dense( int(init_channel * 4) )(input_node)
+    x = Dense( int(init_channel) )(input_node)
     x = BatchNormalization()(x)
     x = LeakyReLU(0.2)(x)
 
-    x = Dense( int(init_channel*4) )(x)
+    x = Dense( int(crit_channel) )(input_node)
     x = BatchNormalization()(x)
     x = LeakyReLU(0.2)(x)
-    
-    x = Reshape( (2, 2, init_channel) )(x)
+
+    filters = int(crit_channel / 4)
+    x = Reshape( (2, 2, filters) )(x)
     
     print(x.get_shape())
-
-    x = Conv2D(strides=1, filters=init_channel, kernel_size= 7, padding='same')(x)
+    
+    x = Conv2D(strides=1, filters=filters, kernel_size= 7, padding='same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(0.2)(x)
         
     repetition = (int(math.log2(target_shape[0]))) - 1 #- 4)
-    filters = init_channel
+    filters = int(filters / 2)
 
     for i in range(repetition - 1):
         x = UpSampling2D()(x)
@@ -436,7 +442,6 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
         filters = int(filters / 2 )
     
     x = UpSampling2D()(x)
-    
     if check_image_optflow:
         # T => image
         x = Conv2D(strides=1, filters=3, kernel_size= 3, padding='same')(x)
@@ -450,14 +455,16 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
     return model
 
 def Decoder(input_shape, target_shape):
-    return Upsample_Decoder(input_shape=input_shape, target_shape=target_shape, initial_kernel_size=(7, 7), initial_pooling='max')
-
+    if target_shape[2] == 3:
+        return Upsample_Decoder(input_shape=input_shape, target_shape=target_shape, initial_kernel_size=(7, 7), initial_pooling='max', check_image_optflow = True)
+    if target_shape[2] == 2:
+        return Upsample_Decoder(input_shape=input_shape, target_shape=target_shape, initial_kernel_size=(7, 7), initial_pooling='max', check_image_optflow = False)
 
 # FOR TESTING EN-DE CODER MODEL 
 if __name__ == "__main__":
 
-    raw_input_shape = (128, 128, 3)
-    target_output_shape = (256, 256, 3)
+    raw_input_shape = (512, 512, 2)
+    target_output_shape = (512, 512, 2)
 
     en_model = Encoder( raw_input_shape )
     en_model.summary()

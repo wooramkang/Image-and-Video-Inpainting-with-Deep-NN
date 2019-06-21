@@ -63,9 +63,6 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
     width = target_wid
     height = target_hei
     
-    #print(frame_stream.shape)
-    #ori_h = frame_stream[0].shape[0]
-    #ori_w = frame_stream[0].shape[1]
     if with_resizing:
         resize_ori_images = []    
 
@@ -73,7 +70,6 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
             resize_ori_images.append(cv2.resize(p, (width, height) ))
         
         resize_optflow = []
-
         resize_optflow = flow_resize(pred_labels, (height, width)  )
         '''
         # need to check diff between auto_resize & manual's
