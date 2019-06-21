@@ -121,12 +121,12 @@ def Img_loader():
                 
         x_data.append(images)
 
-    print(len(x_data))    
-    print(x_data[0]["name"])
-    print(len(x_data[1]["path"]))
-    print(len(x_data[1]["path"][1] ))
-    print(len(x_data[1]["path"][1][1] ))
-    print(x_data[1]["path"][1][2][1] )
+    #print(len(x_data))    
+    #print(x_data[0]["name"])
+    #print(len(x_data[1]["path"]))
+    #print(len(x_data[1]["path"][1] ))
+    #print(len(x_data[1]["path"][1][1] ))
+    #print(x_data[1]["path"][1][2][1] )
     
     '''
         2019. 05 .16 video to images & only image stream loader // wooramkang

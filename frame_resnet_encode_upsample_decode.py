@@ -150,7 +150,7 @@ def _shortcut(input_feature, residual, conv_name_base=None, bn_name_base=None):
     shortcut = input_feature
     # 1 X 1 conv if shape is different. Else identity.
     if stride_width > 1 or stride_height > 1 or not equal_channels:
-        print('reshaping via a convolution...')
+        #print('reshaping via a convolution...')
         if conv_name_base is not None:
             conv_name_base = conv_name_base + '1'
         shortcut = Conv2D(filters=residual_shape[CHANNEL_AXIS],
@@ -363,7 +363,7 @@ def ResNet(input_shape=None,  block='bottleneck', residual_unit='v2',
     filters = initial_filters
     
     final_iter = int(input_shape[0]/224) 
-    print(final_iter)
+    #print(final_iter)
 
     if final_iter >= 2:
         for i in range(final_iter - 1):
@@ -410,7 +410,7 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
         crit_channel = 4096
         
     init_channel = int( (input_shape[0] ) )
-    print(init_channel)
+    #print(init_channel)
 
     input_node = Input(shape = input_shape )
 
@@ -425,7 +425,7 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
     filters = int(crit_channel / 4)
     x = Reshape( (2, 2, filters) )(x)
     
-    print(x.get_shape())
+    #print(x.get_shape())
     
     x = Conv2D(strides=1, filters=filters, kernel_size= 7, padding='same')(x)
     x = BatchNormalization()(x)
@@ -449,7 +449,7 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
         # F => optflow
         x = Conv2D(strides=1, filters=2, kernel_size= 3, padding='same')(x)
 
-    x = Activation('tanh')(x)
+    x = Activation('sigmoid')(x)
 
     model = Model(inputs=input_node, outputs=x)
     return model

@@ -96,8 +96,8 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         #display_img_pairs_w_flows(img_pairs, pred_labels)
 
     else:
-        resize_optflow = pred_labels
         resize_ori_images = frame_stream
+        resize_optflow = pred_labels
 
     return resize_ori_images, resize_optflow
 
