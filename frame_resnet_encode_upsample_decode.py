@@ -449,7 +449,7 @@ def Upsample_Decoder(input_shape=None, target_shape=None, initial_kernel_size=(7
         # F => optflow
         x = Conv2D(strides=1, filters=2, kernel_size= 3, padding='same')(x)
 
-    x = Activation('sigmoid')(x)
+    x = Activation('relu')(x)
 
     model = Model(inputs=input_node, outputs=x)
     return model

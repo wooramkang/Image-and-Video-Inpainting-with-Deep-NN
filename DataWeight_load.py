@@ -332,8 +332,8 @@ def flow_resize(mask_batch, target_size):
         return mask_batch
 
     for i in range( len(mask_batch) ):
-        mask = np.zeros( (mask_size[0], mask_size[1], 3), dtype=np.uint8 )
-        target_mask = np.zeros( (target_size[0], target_size[1], 2 ), dtype=np.uint8 )
+        mask = np.zeros( (mask_size[0], mask_size[1], 3)) #, dtype=np.uint8 )
+        target_mask = np.zeros( (target_size[1], target_size[0], 2 ))#, dtype=np.uint8 )
         
         for h in range( mask_size[0] ):
             for w in range( mask_size[1] ):
@@ -341,10 +341,11 @@ def flow_resize(mask_batch, target_size):
                 mask[h][w][1] = mask_batch[i][h][w][1]
                 mask[h][w][2] = mask_batch[i][h][w][1]
 
-        mask = cv2.resize( mask , target_size)
-        
-        for h in range( target_size[0] ):
-            for w in range( target_size[1] ):
+        mask = cv2.resize( mask , (target_size[0], target_size[1])  )
+        #print(mask.shape)
+        #print(target_mask.shape)
+        for h in range( target_size[1] ):
+            for w in range( target_size[0] ):
                 target_mask[h][w][0] = mask[h][w][0]
                 target_mask[h][w][1] = mask[h][w][1]
         

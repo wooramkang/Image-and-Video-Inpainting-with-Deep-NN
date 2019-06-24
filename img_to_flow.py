@@ -70,8 +70,7 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
             resize_ori_images.append(cv2.resize(p, (width, height) ))
         
         resize_optflow = []
-        resize_optflow = flow_resize(pred_labels, (height, width)  )
-        '''
+        
         # need to check diff between auto_resize & manual's
         
         opt_h = p.shape[0]
@@ -89,7 +88,8 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
                     resize_image[H][W] = p[n_hei][n_wid]
 
             resize_optflow.append(resize_image)
-        '''
+        
+        resize_optflow = flow_resize(pred_labels, (height, width)  )
         resize_ori_images = np.array(resize_ori_images)
         resize_optflow = np.array(resize_optflow)        
 
@@ -107,5 +107,4 @@ if __name__ == "__main__":
     frames.append(cv2.imread("mpisintel_test_clean_ambush_1_frame_0001.png"))
     frames.append(cv2.imread("mpisintel_test_clean_ambush_1_frame_0002.png"))
     frames = np.array(frames)
-    
     ori, opt = img_to_optflow(frames, 2,  target_hei =400, target_wid = 1000, direction = False)
