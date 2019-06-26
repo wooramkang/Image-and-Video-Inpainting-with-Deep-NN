@@ -15,7 +15,7 @@ from DataWeight_load import *
 
 # Build a list of image pairs to process
 
-def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, direction=True, with_resizing = True):
+def img_to_optflow(frame_stream, batchsize, target_hei =512, target_wid = 512, direction=True, with_resizing = True):
     
     img_pairs = []
     t_frames = []
@@ -72,7 +72,7 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
         resize_optflow = []
         
         # need to check diff between auto_resize & manual's
-        
+        '''
         opt_h = p.shape[0]
         opt_w = p.shape[1]
         
@@ -88,12 +88,12 @@ def img_to_optflow(frame_stream, batchsize, target_hei =400, target_wid = 400, d
                     resize_image[H][W] = p[n_hei][n_wid]
 
             resize_optflow.append(resize_image)
-        
+        '''
         resize_optflow = flow_resize(pred_labels, (height, width)  )
         resize_ori_images = np.array(resize_ori_images)
-        resize_optflow = np.array(resize_optflow)        
+        #resize_optflow = np.array(resize_optflow)        
 
-        #display_img_pairs_w_flows(img_pairs, pred_labels)
+        display_img_pairs_w_flows(img_pairs, pred_labels)
 
     else:
         resize_ori_images = frame_stream

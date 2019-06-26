@@ -20,20 +20,35 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinp
     
     trial_mask = np.ones( (batch_size,  target_size[1], target_size[0], 3 ))#, dtype=np.uint8 )
     for c in range(batch_size):
-        for i in range(int(target_size[1]/5) , int(target_size[1]*(2/5) ), 1):
-            for j in range(int(target_size[0]/5) , int(target_size[0]*(2/5) ) , 1):
+        for i in range(int(target_size[1] * (2/5)  ) , int(target_size[1]*(3/5)  ), 1):
+            for j in range(int(target_size[0] *(2/5)  ) , int(target_size[0]*(3/5)  ) , 1):
                 for k in range(3):
                     trial_mask[c][i][j][k] = 0
-
     mask_batch = trial_mask
 
     img_masked_batch = np.array(image_masking(img_train_batch, mask_batch) )
     raw_masked_batch = deepcopy(img_masked_batch)
+    
+    Not_Done = True
+    paint_count= 0
 
     for i in range(reinpaint_size):
         _, flows_forward = img_to_optflow(img_masked_batch, batch_size, target_size[0], target_size[1], direction=True, with_resizing = True)
         img_masked_batch, flows_backward = img_to_optflow(img_masked_batch, batch_size, target_size[0], target_size[1], direction=False, with_resizing = True)
-        _, final_frames, masked_frames = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, False)
+        
+        if (i == (reinpaint_size -1 )):
+            #_, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, True)
+            break
+
+        if Not_Done:
+            _, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, False)
+        else:
+            #_, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, True)
+            break
+
+        if int(paint_count)/1000 < 1:
+            Not_Done = False
+
         img_masked_batch = final_frames
         mask_batch = masked_frames
 
@@ -41,10 +56,9 @@ def test_one_epoch(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinp
 
 def test():
 
-    BATCH_SIZE = 10
+    BATCH_SIZE = 12
     reinpaint_size = 5
-    # to re-inpaint more than 3 is meanningless
-
+    
     TRAIN_LOG_DIR ="img_train_log/"
 
     global train_log

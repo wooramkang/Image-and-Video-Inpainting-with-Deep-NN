@@ -23,27 +23,58 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     count =0
     end_of_frame_arr = len(frames)-1
     
-    img_pairs = []
-    t_frames = []
+    for i in range(0, end_of_frame_arr):
+        #print(i)
+        for h in range(height):        
+            for w in range(width):
 
-    for i in range(batchsize):
-        t_frames.append( cv2.resize(frames[i], (1024, 436) ) )
+                if masks[i][h][w][0] == 0:
 
-    frame_stream = np.array(t_frames)
+                    next_crit_flow = flows_forward[i][h][w]
 
-    for i in range(batchsize-1):
-        img_pairs.append( (frame_stream[i], frame_stream[i+1]) )
-    
-    for i in range(1, end_of_frame_arr-1):
+                    next_h = int(h - next_crit_flow[0])
+                    next_w = int(w - next_crit_flow[1])
+
+                    if ( h - next_crit_flow[0]) - next_h > 0.5:
+                        next_h = next_h + 1
+
+                    if ( w - next_crit_flow[1]) - next_w > 0.5:
+                        next_w = next_w + 1
+                        
+                    if next_h >= height:
+                        continue
+
+                    if next_w >= width:
+                        continue
+
+                    if next_h < 0:
+                        continue
+
+                    if next_w < 0:
+                        continue
+                    
+                    if masks[i + 1][ next_h ][ next_w ][0] == 0:
+                        continue
+
+                    frames[i][h][w] = frames[i + 1][next_h][next_w]
+
+                    for t in range(3):
+                        masks[i][h][w][t] = 1
+
+                    count = count +1
+
+    print(count)
+
+    for i in range(0, end_of_frame_arr-1):
         #print(i)
         for h in range(height):        
             for w in range(width):
                     if masks[i][h][w][0] == 0:
                         
-                        crit_flow = flows_forward[i-1][h][w]
+                        crit_flow = flows_forward[i][h][w]
 
-                        prev_h = int(h + crit_flow[0])
-                        prev_w = int(w + crit_flow[1])
+                        prev_h = int(h - crit_flow[0])
+                        prev_w = int(w - crit_flow[1])
                         
                         if (h - crit_flow[0]) - prev_h > 0.5:
                             prev_h = prev_h + 1
@@ -59,14 +90,14 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                         if prev_w < 0:
                             continue
                         
-                        next_crit_flow = flows_forward[i][h][w]
+                        next_crit_flow = flows_forward[i+1][prev_h][prev_w]
 
-                        next_h = int(h - next_crit_flow[0])
-                        next_w = int(w - next_crit_flow[1])
+                        next_h = int(prev_h - next_crit_flow[0])
+                        next_w = int(prev_w - next_crit_flow[1])
 
-                        if ( h + next_crit_flow[0]) - next_h > 0.5:
-                            next_h = next_h + 1
-                        if ( w + next_crit_flow[1]) - next_w > 0.5:
+                        if (prev_h - next_crit_flow[0]) - next_h > 0.5:
+                            next_h = next_h + 1                            
+                        if (prev_h - next_crit_flow[0]) - next_w > 0.5:
                             next_w = next_w + 1
 
                         if next_h >= height:
@@ -78,56 +109,54 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                         if next_w < 0:
                             continue
 
-                        if masks[i - 1 ][ prev_h ][ prev_w ][0] == 0:
+                        if masks[i + 2][ next_h ][ next_w ][0] == 0:
                             continue
+                        if masks[i + 1][ prev_h ][ prev_w ][0] == 0:
+                                                                                
+                            frames[i][h][w] = frames[i + 2][next_h][next_w]
+                            
+                            for t in range(3):
+                                masks[i][h][w][t] = 1
+                            
+                            frames[i + 1][prev_h][prev_w] = frames[i + 2][next_h][next_w]
+                            
+                            for t in range(3):
+                                masks[i + 1][prev_h][prev_w][t] = 1
+                        else:
+                            '''
+                            if frames[i + 1][prev_h][prev_w][0] != frames[i + 2][next_h][next_w][0]:
+                                continue
+                            if frames[i + 1][prev_h][prev_w][1] != frames[i + 2][next_h][next_w][1]:
+                                continue
+                            '''
+                            frames[i][h][w] = frames[i + 2][next_h][next_w]
+                            
+                            for t in range(3):
+                                masks[i][h][w][t] = 1
+                        
+                        count = count +1
 
-                        if masks[i + 1][ next_h ][ next_w ][0] == 0:
-                            continue
-                        
-                        if frames[i - 1][prev_h][prev_w][0] != frames[i + 1][next_h][next_w][0]:
-                            continue
-                        
-                        for t in range(2):
-                            flows_forward[i][h][w][t] = flows_forward[i-1][prev_h][prev_w][t]
+    print(count)
+
+    '''                    
+    ### backward ###
     
-    #display_flows = flow_resize(deepcopy(flows_forward), (1024, 436) ) 
-    #display_img_pairs_w_flows(img_pairs, display_flows)
-                    
-    for i in range(1, end_of_frame_arr-1):
+    for i in range(end_of_frame_arr, 0, -1):
         #print(i)
         for h in range(height):        
             for w in range(width):
 
                 if masks[i][h][w][0] == 0:
-  
-                    crit_flow = flows_forward[i-1][h][w]
-
-                    prev_h = int(h + crit_flow[0])
-                    prev_w = int(w + crit_flow[1])
                     
-                    if (h - crit_flow[0]) - prev_h > 0.5:
-                        prev_h = prev_h + 1
-                    if (w - crit_flow[1]) - prev_w > 0.5:
-                        prev_w = prev_w + 1
+                    next_crit_flow = flows_backward[ batchsize - (i+1) ] [h][w]
+                    next_h = int(h + next_crit_flow[0])
+                    next_w = int(w + next_crit_flow[1])
 
-                    if prev_h >= height:
-                        continue
-                    if prev_w >= width:
-                        continue
-                    if prev_h < 0:
-                        continue
-                    if prev_w < 0:
-                        continue
-                    '''
-                    next_crit_flow = flows_forward[i + 1][h][w]
-
-                    next_h = int(h - next_crit_flow[0])
-                    next_w = int(w - next_crit_flow[1])
-
-                    if ( h - next_crit_flow[0]) - next_h > 0.5:
+                    if ( h + next_crit_flow[0]) - next_h > 0.5:
                         next_h = next_h + 1
-                    if ( w - next_crit_flow[1]) - next_w > 0.5:
+                    if ( w + next_crit_flow[1]) - next_w > 0.5:
                         next_w = next_w + 1
+
                     if next_h >= height:
                         continue
                     if next_w >= width:
@@ -136,35 +165,20 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                         continue
                     if next_w < 0:
                         continue
-                    '''
 
-                    if masks[i - 1 ][ prev_h ][ prev_w ][0] == 0:
+                    if masks[ i - 1 ][ next_h ][ next_w ][0] == 0:
                         continue
-
-                    #if masks[i + 1][ next_h ][ next_w ][0] == 0:
-                        #continue
                     
-                    #if frames[i-1][prev_h][prev_w][0] != frames[i + 1][next_h][next_w][0]:
-                        #continue
-
-                    frames[i][h][w] = frames[i - 1][prev_h][prev_w]
+                    frames[i][h][w] = frames[i - 1][next_h][next_w]
 
                     for t in range(3):
                         masks[i][h][w][t] = 1
 
                     count = count +1
-
+    
     print(count)
-    count = 0
-    
-    ### backward ###
-    img_pairs = []
 
-    for i in range(batchsize-1):
-        img_pairs.append( (frame_stream[ batchsize - (i+1) ], frame_stream[ batchsize - (i+2) ]) )
-    
-    for i in range(1, end_of_frame_arr-1):
-        #print(i)
+    for i in range(end_of_frame_arr, 1, -1):
         for h in range(height):        
             for w in range(width):
 
@@ -175,9 +189,9 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                     prev_h = int(h + crit_flow[0])
                     prev_w = int(w + crit_flow[1])
                     
-                    if (h - crit_flow[0]) - prev_h > 0.5:
+                    if (h + crit_flow[0]) - prev_h > 0.5:
                         prev_h = prev_h + 1
-                    if (w - crit_flow[1]) - prev_w > 0.5:
+                    if (w + crit_flow[1]) - prev_w > 0.5:
                         prev_w = prev_w + 1
 
                     if prev_h >= height:
@@ -189,14 +203,15 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                     if prev_w < 0:
                         continue
 
-                    next_crit_flow = flows_backward[batchsize - (i+1) - 1][h][w]
+                    next_crit_flow = flows_backward[batchsize - (i+1) - 1 ][h][w]
 
-                    next_h = int(h - next_crit_flow[0])
-                    next_w = int(w - next_crit_flow[1])
+                    next_h = int(prev_h + next_crit_flow[0])
+                    next_w = int(prev_w + next_crit_flow[1])
 
-                    if ( h - next_crit_flow[0]) - next_h > 0.5:
+                    if ( prev_h + next_crit_flow[0]) - next_h > 0.5:
                         next_h = next_h + 1
-                    if ( w - next_crit_flow[1]) - next_w > 0.5:
+
+                    if ( prev_w + next_crit_flow[1]) - next_w > 0.5:
                         next_w = next_w + 1
 
                     if next_h >= height:
@@ -206,90 +221,33 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                     if next_h < 0:
                         continue
                     if next_w < 0:
+                        continue
+
+                    if masks[i - 2][ next_h ][ next_w ][0] == 0:                    
                         continue
 
                     if masks[i - 1][ prev_h ][ prev_w ][0] == 0:
-                        continue
+                        frames[i][h][w] = frames[i - 2][next_h][next_w]
 
-                    if masks[i + 1][ next_h ][ next_w ][0] == 0:
-                        continue
-                    
-                    if frames[i - 1][prev_h][prev_w][0] != frames[i + 1][next_h][next_w][0]:
-                        continue
+                        for t in range(3):
+                            masks[i][h][w][t] = 1
+                        
+                        frames[i - 1][prev_h][prev_w] = frames[i - 2][next_h][next_w]
 
-                    flows_backward[i][h][w] = flows_backward[i-1][prev_h][prev_w]
+                        for t in range(3):
+                            masks[i - 1][prev_h][prev_w][t] = 1
+                    else:
 
+                        frames[i][h][w] = frames[i - 2][next_h][next_w]
 
-    #display_flows = flow_resize(deepcopy(flows_backward), (1024, 436) ) 
-    #display_img_pairs_w_flows(img_pairs, display_flows)
-                    
-    for i in range(1, end_of_frame_arr-1):
-        #print(i)
-        for h in range(height):        
-            for w in range(width):
-
-                if masks[i][h][w][0] == 0:
-                    
-                    '''
-                    crit_flow = flows_backward[ batchsize - (i+1) ][h][w]
-
-                    prev_h = int(h + crit_flow[0])
-                    prev_w = int(w + crit_flow[1])
-                    
-                    if (h - crit_flow[0]) - prev_h > 0.5:
-                        prev_h = prev_h + 1
-                    if (w - crit_flow[1]) - prev_w > 0.5:
-                        prev_w = prev_w + 1
-
-                    if prev_h >= height:
-                        continue
-                    if prev_w >= width:
-                        continue
-                    if prev_h < 0:
-                        continue
-                    if prev_w < 0:
-                        continue
-                    '''
-                    next_crit_flow = flows_backward[batchsize - (i+1) - 1][h][w]
-
-                    next_h = int(h - next_crit_flow[0])
-                    next_w = int(w - next_crit_flow[1])
-
-                    if ( h - next_crit_flow[0]) - next_h > 0.5:
-                        next_h = next_h + 1
-                    if ( w - next_crit_flow[1]) - next_w > 0.5:
-                        next_w = next_w + 1
-
-                    if next_h >= height:
-                        continue
-                    if next_w >= width:
-                        continue
-                    if next_h < 0:
-                        continue
-                    if next_w < 0:
-                        continue
-
-                    #if masks[i - 1 ][ prev_h ][ prev_w ][0] == 0:
-                        #continue
-
-                    if masks[i + 1][ next_h ][ next_w ][0] == 0:
-                        continue
-                    
-                    #if frames[i + 1][prev_h][prev_w][0] != frames[i - 1][next_h][next_w][0]:
-                        #continue
-
-                    frames[i][h][w] = frames[i+1][next_h][next_w]
-
-                    for t in range(3):
-                        masks[i][h][w][t] = 1
-
+                        for t in range(3):
+                            masks[i][h][w][t] = 1
+                        
                     count = count +1
-
+    '''
     print(count)
-    count = 0
     
-
-    return frames, masks
+    return frames, masks, count
 
 def nn_guide_inpaint(frames, masks, batch_size):
 
@@ -349,7 +307,7 @@ def inpainting_process( flows_forward, flows_backward, frames, masks, batchsize,
     #print("")
 
     print("flow guide inpainting start")
-    frames , masks = flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
+    frames, masks, paint_count = flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
     print("flow guide inpainting done")
     print("")
 
@@ -359,6 +317,6 @@ def inpainting_process( flows_forward, flows_backward, frames, masks, batchsize,
         print("nn base inpainting done")
         print("")
     else:
-        return frames, frames, masks
+        return frames, frames, masks, paint_count
     
-    return flow_guide_frames, final_frames, masks_batch
+    return flow_guide_frames, final_frames, masks_batch, paint_count

@@ -342,8 +342,7 @@ def flow_resize(mask_batch, target_size):
                 mask[h][w][2] = mask_batch[i][h][w][1]
 
         mask = cv2.resize( mask , (target_size[0], target_size[1])  )
-        #print(mask.shape)
-        #print(target_mask.shape)
+        #print(mask)
         for h in range( target_size[1] ):
             for w in range( target_size[0] ):
                 target_mask[h][w][0] = mask[h][w][0]
