@@ -183,10 +183,12 @@ class ModelBase:
             self.last_ckpt = self.opts['ckpt_path']
             assert(self.last_ckpt is not None)
             if self.opts['verbose']:
-                print(f"Loading model checkpoint {self.last_ckpt} for eval or testing...\n")
+                pass
+                #print(f"Loading model checkpoint {self.last_ckpt} for eval or testing...\n")
             self.saver.restore(self.sess, self.last_ckpt)
             if self.opts['verbose']:
-                print("... model loaded")
+                pass
+                #print("... model loaded")
 
     ###
     # Model mgmt

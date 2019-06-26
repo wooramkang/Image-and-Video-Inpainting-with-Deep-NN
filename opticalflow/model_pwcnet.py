@@ -241,7 +241,8 @@ class ModelPWCNet(ModelBase):
         Called by the base class when building the TF graph to setup the list of output tensors
         """
         if self.opts['verbose']:
-            print("Building model...")
+            pass
+            #print("Building model...")
         assert(self.num_gpus <= 1)
 
         # Build the backbone neural nets and collect the output tensors
@@ -249,14 +250,16 @@ class ModelPWCNet(ModelBase):
             self.flow_pred_tnsr, self.flow_pyr_tnsr = self.nn(self.x_tnsr)
 
         if self.opts['verbose']:
-            print("... model built.")
+            pass
+            #print("... model built.")
 
     def build_model_towers(self):
         """Build model towers. A tower is the name used to describe a copy of the model on a device.
         Called by the base class when building the TF graph to setup the list of output tensors
         """
         if self.opts['verbose']:
-            print("Building model towers...")
+            pass
+            #print("Building model towers...")
 
         # Setup a learning rate training schedule
         self.setup_lr_sched()

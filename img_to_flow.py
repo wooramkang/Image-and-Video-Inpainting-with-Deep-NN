@@ -15,32 +15,12 @@ from DataWeight_load import *
 
 # Build a list of image pairs to process
 
-def img_to_optflow(frame_stream, batchsize, target_hei =512, target_wid = 512, direction=True, with_resizing = True):
+def init_optflow_nn(model_dir = 'opticalflow/pwcnet-lg-6-2-multisteps-chairsthingsmix/pwcnet.ckpt-595000'):
     
-    img_pairs = []
-    t_frames = []
-
-    for i in range(batchsize):
-        t_frames.append( cv2.resize(frame_stream[i], (1024, 436) ) )
-    frame_stream = np.array(t_frames)
-
-    #cv2.imshow("for_checking", frame_stream[1])
-    #cv2.waitKey(3000)
-
-    if direction:
-        for i in range(batchsize-1):
-            img_pairs.append( (frame_stream[i], frame_stream[i+1]) )
-    else:
-        for i in range(batchsize-1):
-            img_pairs.append( (frame_stream[ batchsize - (i+1) ], frame_stream[ batchsize - (i+2) ]) )
-
-    #cv2.imshow("for_checking_1", img_pairs[1][0])
-    #cv2.waitKey(3000)
-
     gpu_devices = ['/device:GPU:0']  
     controller = '/device:GPU:0'
 
-    ckpt_path = 'opticalflow/pwcnet-lg-6-2-multisteps-chairsthingsmix/pwcnet.ckpt-595000'
+    ckpt_path = model_dir
 
     nn_opts = deepcopy(_DEFAULT_PWCNET_TEST_OPTIONS)
     nn_opts['verbose'] = True
@@ -52,12 +32,30 @@ def img_to_optflow(frame_stream, batchsize, target_hei =512, target_wid = 512, d
     nn_opts['use_res_cx'] = True
     nn_opts['pyr_lvls'] = 6
     nn_opts['flow_pred_lvl'] = 2
-
     nn_opts['adapt_info'] = (1, 436,1024, 2)
 
     nn = ModelPWCNet(mode='test', options=nn_opts)
     #nn.print_config()
     
+    return nn
+
+
+def img_to_optflow(frame_stream, batchsize, nn, target_hei =512, target_wid = 512, direction=True, with_resizing = True):
+    
+    img_pairs = []
+    t_frames = []
+
+    for i in range(batchsize):
+        t_frames.append( cv2.resize(frame_stream[i], (1024, 436) ) )
+    frame_stream = np.array(t_frames)
+
+    if direction:
+        for i in range(batchsize-1):
+            img_pairs.append( (frame_stream[i], frame_stream[i+1]) )
+    else:
+        for i in range(batchsize-1):
+            img_pairs.append( (frame_stream[ batchsize - (i+1) ], frame_stream[ batchsize - (i+2) ]) )
+
     pred_labels = nn.predict_from_img_pairs(img_pairs, batch_size=1, verbose=False)
     
     width = target_wid
@@ -91,9 +89,8 @@ def img_to_optflow(frame_stream, batchsize, target_hei =512, target_wid = 512, d
         '''
         resize_optflow = flow_resize(pred_labels, (height, width)  )
         resize_ori_images = np.array(resize_ori_images)
-        #resize_optflow = np.array(resize_optflow)        
-
-        display_img_pairs_w_flows(img_pairs, pred_labels)
+      
+        #display_img_pairs_w_flows(img_pairs, pred_labels)
 
     else:
         resize_ori_images = frame_stream
@@ -101,10 +98,3 @@ def img_to_optflow(frame_stream, batchsize, target_hei =512, target_wid = 512, d
 
     return resize_ori_images, resize_optflow
 
-#for test of optflow estim
-if __name__ == "__main__":
-    frames = []
-    frames.append(cv2.imread("mpisintel_test_clean_ambush_1_frame_0001.png"))
-    frames.append(cv2.imread("mpisintel_test_clean_ambush_1_frame_0002.png"))
-    frames = np.array(frames)
-    ori, opt = img_to_optflow(frames, 2,  target_hei =400, target_wid = 1000, direction = False)
