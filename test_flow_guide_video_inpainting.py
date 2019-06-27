@@ -1,4 +1,4 @@
-#from model import *
+
 import matplotlib.pyplot as plt
 from pconv_Dilatedconv_model import *
 from flow_guide_frame_inpainting import inpainting_process
@@ -17,6 +17,8 @@ from opticalflow.model_pwcnet import ModelPWCNet, _DEFAULT_PWCNET_TEST_OPTIONS
 from opticalflow.visualize import display_img_pairs_w_flows
 from opticalflow.optflow import flow_to_img
 
+import math
+
 def test_epochs(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinpaint_size):
     batch_size = BATCH_SIZE
     random_sample_size = 10000
@@ -27,27 +29,28 @@ def test_epochs(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinpain
     #img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE) )
     img_train_batch = np.array( iter_to_one_batch(train_dataloader, BATCH_SIZE, False) )
 
-    #IMAGE BATCH
-    mask_batch = np.array(mask_to_one_batch(mask_loader, batch_size))
-    ''' 
-    ### BOX MASK FOR TRIALS
+    ### RANDOM MASK FOR TRIALS
+    ### mask_batch = np.array(mask_to_one_batch(mask_loader, batch_size))
     
+    ### BOX MASK FOR TRIALS
     trial_mask = np.ones( (batch_size,  target_size[1], target_size[0], 3 ))#, dtype=np.uint8 )
     for c in range(batch_size):
+        for i in range(int(target_size[1] * (3/8)  ) , int(target_size[1]*(4/8)  ), 1):
+            for j in range(int(target_size[0] *(3/8)  ) , int(target_size[0]*(4/8)  ) , 1):
+                for k in range(3):
+                    trial_mask[c][i][j][k] = 0
         for i in range(int(target_size[1] * (4/8)  ) , int(target_size[1]*(5/8)  ), 1):
             for j in range(int(target_size[0] *(4/8)  ) , int(target_size[0]*(5/8)  ) , 1):
                 for k in range(3):
                     trial_mask[c][i][j][k] = 0
     mask_batch = trial_mask
-    '''
-    num_masked_pixel = np.sum(mask_batch)
-
-    img_masked_batch = np.array(image_masking(img_train_batch, mask_batch) )
+    
+    img_masked_batch = img_train_batch #np.array(image_masking(img_train_batch, mask_batch) )
     raw_masked_batch = deepcopy(img_masked_batch)
     
-    Not_Done = True
+    check_done = False
     paint_count= 0
-
+    minimum_paint_count = 1000 ### 1000 5000 .....
     optflow_nn = init_optflow_nn()
 
     for i in range(reinpaint_size):
@@ -56,17 +59,17 @@ def test_epochs(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinpain
         img_masked_batch, flows_backward = img_to_optflow(img_masked_batch, batch_size, optflow_nn, target_size[0], target_size[1], direction=False, with_resizing = True)
         
         if (i == (reinpaint_size -1 )):
-            _, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, True)
+            #_, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, True)
             break
 
-        if Not_Done:
+        if not check_done:
             _, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, False)
         else:
-            _, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, True)
+            #_, final_frames, masked_frames, paint_count = inpainting_process( flows_forward, flows_backward, img_masked_batch, mask_batch, batch_size, True)
             break
 
-        if int(paint_count)/1000 < 1:
-            Not_Done = False
+        if int(paint_count/minimum_paint_count) < 1: ### 
+            check_done = True
 
         img_masked_batch = final_frames
         mask_batch = masked_frames
@@ -76,7 +79,7 @@ def test_epochs(mask_loader, train_dataloader, BATCH_SIZE, target_size, reinpain
 def test():
 
     BATCH_SIZE = 12
-    reinpaint_size = int((BATCH_SIZE * 2)/3)
+    reinpaint_size = int(BATCH_SIZE / 2)
     
     TRAIN_LOG_DIR ="img_train_log/"
 

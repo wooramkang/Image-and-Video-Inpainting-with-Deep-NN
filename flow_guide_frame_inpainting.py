@@ -32,13 +32,13 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
 
                     next_crit_flow = flows_forward[i][h][w]
 
-                    next_h = int(h - next_crit_flow[0])
-                    next_w = int(w - next_crit_flow[1])
+                    next_h = int(h + next_crit_flow[1])
+                    next_w = int(w + next_crit_flow[0])
 
-                    if ( h - next_crit_flow[0]) - next_h > 0.5:
+                    if ( h + next_crit_flow[0]) - next_h > 0.5:
                         next_h = next_h + 1
 
-                    if ( w - next_crit_flow[1]) - next_w > 0.5:
+                    if ( w + next_crit_flow[1]) - next_w > 0.5:
                         next_w = next_w + 1
                         
                     if next_h >= height:
@@ -73,12 +73,12 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                         
                         crit_flow = flows_forward[i][h][w]
 
-                        prev_h = int(h - crit_flow[0])
-                        prev_w = int(w - crit_flow[1])
+                        prev_h = int(h + crit_flow[1])
+                        prev_w = int(w + crit_flow[0])
                         
-                        if (h - crit_flow[0]) - prev_h > 0.5:
+                        if (h + crit_flow[0]) - prev_h > 0.5:
                             prev_h = prev_h + 1
-                        if (w - crit_flow[1]) - prev_w > 0.5:
+                        if (w + crit_flow[1]) - prev_w > 0.5:
                             prev_w = prev_w + 1
 
                         if prev_h >= height:
@@ -92,12 +92,12 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                         
                         next_crit_flow = flows_forward[i+1][prev_h][prev_w]
 
-                        next_h = int(prev_h - next_crit_flow[0])
-                        next_w = int(prev_w - next_crit_flow[1])
+                        next_h = int(prev_h + next_crit_flow[1])
+                        next_w = int(prev_w + next_crit_flow[0])
 
-                        if (prev_h - next_crit_flow[0]) - next_h > 0.5:
+                        if (prev_h + next_crit_flow[0]) - next_h > 0.5:
                             next_h = next_h + 1                            
-                        if (prev_h - next_crit_flow[0]) - next_w > 0.5:
+                        if (prev_h + next_crit_flow[0]) - next_w > 0.5:
                             next_w = next_w + 1
 
                         if next_h >= height:
@@ -117,12 +117,12 @@ def flow_guide_inpaint( flows_forward, flows_backward, frames, masks, batchsize)
                             #for t in range(3):
                                 #masks[i][h][w][t] = 1
 
-                            frames[i + 1][prev_h][prev_w] = frames[i + 2][next_h][next_w]
+                            #frames[i + 1][prev_h][prev_w] = frames[i + 2][next_h][next_w]
                             #for t in range(3):
                                 #masks[i + 1][prev_h][prev_w][t] = 1
                         else:
 
-                            frames[i][h][w] = frames[i + 2][next_h][next_w]
+                            frames[i][h][w] = frames[i + 1][prev_h][prev_w]
                             
                             #for t in range(3):
                                 #masks[i][h][w][t] = 1
